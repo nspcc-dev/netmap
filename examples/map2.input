@@ -1,0 +1,24 @@
+add 1 /Location:Asia/Country:Korea
+add 3 /Location:Asia/Country:Korea
+add 2 /Location:Asia/Country:China
+add 4 /Location:Asia/Country:China
+add 6 /Location:Europe/Country:France
+add 7 /Location:Europe/Country:France
+add 8 /Location:Europe/Country:France
+add 9 /Location:Europe/Country:Germany/City:Berlin
+add 10 /Location:Europe/Country:Germany/City:Berlin
+add 11 /Location:Europe/Country:Italy/City:Rome
+add 12 /Location:Europe/Country:Italy/City:Rome
+add 13 /Location:Europe/Country:Russia
+add 14 /Location:Europe/Country:Russia
+add 15 /Location:Europe/Country:Switzerland
+add 16 /Location:Europe/Country:Switzerland
+add 17 /Location:Europe/Country:Spain/City:Madrid
+add 18 /Location:Europe/Country:Spain/City:Madrid
+add 19 /Location:NorthAmerica/Country:USA
+add 20 /Location:NorthAmerica/Country:USA
+add 21 /Location:NorthAmerica/Country:Canada
+add 22 /Location:NorthAmerica/Country:Canada
+add 23 /Location:NorthAmerica/Country:Mexico
+add 24 /Location:NorthAmerica/Country:Mexico
+save map2

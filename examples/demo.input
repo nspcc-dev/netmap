@@ -1,0 +1,21 @@
+add 1 /Location:US
+add 2 /Location:US
+add 3 /Location:US
+add 4 /Location:US
+add 5 /Location:EU
+add 6 /Location:EU
+add 7 /Location:EU
+add 8 /Location:EU
+add 9 /Location:RU
+add 10 /Location:RU
+add 11 /Location:RU
+add 12 /Location:RU
+add 13 /Location:Japan
+add 14 /Location:Japan
+add 15 /Location:Japan
+add 16 /Location:Japan
+add 18 /Location:Japan
+add 19 /Location:Canada
+add 20 /Location:Canada
+add 21 /Location:Canada
+save demo
