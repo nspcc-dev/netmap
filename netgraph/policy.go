@@ -170,7 +170,6 @@ func (b Bucket) filterSubtree(filter FilterFunc) *Bucket {
 	return nil
 }
 
-
 func (b Bucket) getMaxSelection(ss []Select, filter FilterFunc) (*Bucket, int32) {
 	return b.getMaxSelectionC(ss, filter, true)
 }
@@ -301,7 +300,7 @@ func (b Bucket) combine(b1 *Bucket) *Bucket {
 	return nil
 }
 
-func (b Bucket) checkConflicts(b1 Bucket) bool {
+func (b Bucket) CheckConflicts(b1 Bucket) bool {
 	for _, n := range b1.nodes {
 		if !contains(b.nodes, n) {
 			continue
@@ -313,7 +312,7 @@ func (b Bucket) checkConflicts(b1 Bucket) bool {
 					if contains(c1.nodes, n) && (c.Key != c1.Key || c.Value != c1.Value) {
 						return true
 					}
-					if c.Key == c1.Key && c.Value == c1.Value && !check && c.checkConflicts(c1) {
+					if c.Key == c1.Key && c.Value == c1.Value && !check && c.CheckConflicts(c1) {
 						return true
 					}
 					check = true
@@ -340,14 +339,14 @@ loop:
 	sort.Sort(b.nodes)
 }
 
-func (b *Bucket) updateIndices(tr map[int32]int32) Bucket {
+func (b *Bucket) UpdateIndices(tr map[int32]int32) Bucket {
 	var (
 		children = make([]Bucket, 0, len(b.children))
 		nodes    = make(Int32Slice, 0, len(b.nodes))
 	)
 
 	for i := range b.children {
-		children = append(children, b.children[i].updateIndices(tr))
+		children = append(children, b.children[i].UpdateIndices(tr))
 	}
 	for i := range b.nodes {
 		nodes = append(nodes, tr[b.nodes[i]])

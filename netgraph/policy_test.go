@@ -100,8 +100,8 @@ func TestBucket_checkConflicts(t *testing.T) {
 	b2, err = newRoot(buckets[1:]...)
 	g.Expect(err).NotTo(HaveOccurred())
 
-	g.Expect(b1.checkConflicts(b2)).To(BeTrue())
-	g.Expect(b2.checkConflicts(b1)).To(BeTrue())
+	g.Expect(b1.CheckConflicts(b2)).To(BeTrue())
+	g.Expect(b2.CheckConflicts(b1)).To(BeTrue())
 
 	buckets = []bucket{
 		{"/Location:Europe/Country:Germany", []int32{1, 3}},
@@ -113,8 +113,8 @@ func TestBucket_checkConflicts(t *testing.T) {
 	b2, err = newRoot(buckets[1:]...)
 	g.Expect(err).NotTo(HaveOccurred())
 
-	g.Expect(b1.checkConflicts(b2)).To(BeFalse())
-	g.Expect(b2.checkConflicts(b1)).To(BeFalse())
+	g.Expect(b1.CheckConflicts(b2)).To(BeFalse())
+	g.Expect(b2.CheckConflicts(b1)).To(BeFalse())
 }
 
 func TestBucket_Merge(t *testing.T) {
