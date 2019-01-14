@@ -12,17 +12,22 @@ import (
 )
 
 const (
+	// Separator separates key:value pairs in string representation of options.
 	Separator   = "/"
+
+	// NodesBucket is the name for optionless bucket containing only nodes.
 	NodesBucket = ""
 )
 
 type (
+	// Policy specifies parameters for storage selection.
 	Policy struct {
 		Size       int64
 		ReplFactor int
 		NodeCount  int
 	}
 
+	// Bucket represents netmap as graph.
 	Bucket struct {
 		Key      string
 		Value    string
@@ -30,7 +35,10 @@ type (
 		children []Bucket
 	}
 
+	// Int32Slice is generic type for more convenient sorting.
 	Int32Slice []int32
+
+	// FilterFunc is generic type for filtering function on nodes.
 	FilterFunc func([]int32) []int32
 )
 
@@ -38,6 +46,7 @@ func (p Int32Slice) Len() int           { return len(p) }
 func (p Int32Slice) Less(i, j int) bool { return p[i] < p[j] }
 func (p Int32Slice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
+// FindGraph returns random subgraph, corresponding to specified placement rule.
 func (b *Bucket) FindGraph(rnd *rand.Rand, ss ...Selector) (c *Bucket) {
 	var g *Bucket
 
@@ -58,6 +67,7 @@ func (b *Bucket) findGraph(rnd *rand.Rand, ss []Select, fs []Filter) (c *Bucket)
 	return
 }
 
+// FindNodes returns list of nodes, corresponding to specified placement rule.
 func (b *Bucket) FindNodes(rnd *rand.Rand, ss ...Selector) (nodes []int32) {
 	for _, s := range ss {
 		nodes = merge(nodes, b.findNodes(rnd, s.Selectors, s.Filters))
@@ -76,6 +86,7 @@ func (b *Bucket) findNodes(rnd *rand.Rand, ss []Select, fs []Filter) []int32 {
 	return nil
 }
 
+// Copy returns deep copy of Bucket.
 func (b Bucket) Copy() Bucket {
 	var bc = Bucket{
 		Key:   b.Key,
@@ -236,6 +247,8 @@ func (b Bucket) GetMaxSelection(ss []Select, fs []Filter) (r *Bucket) {
 	return
 }
 
+// GetSelection returns subgraph, satisfying specified selections.
+// It is assumed that all filters were already applied.
 func (b Bucket) GetSelection(ss []Select, rnd *rand.Rand) *Bucket {
 	var (
 		root     = Bucket{Key: b.Key, Value: b.Value}
@@ -300,6 +313,9 @@ func (b Bucket) combine(b1 *Bucket) *Bucket {
 	return nil
 }
 
+// CheckConflicts checks if b1 is ready to merge with b.
+// Conflict is a situation, when node has different values for the same option
+// in b and b1.
 func (b Bucket) CheckConflicts(b1 Bucket) bool {
 	for _, n := range b1.nodes {
 		if !contains(b.nodes, n) {
@@ -323,6 +339,7 @@ func (b Bucket) CheckConflicts(b1 Bucket) bool {
 	return false
 }
 
+// Merge merges b1 into b assuming there are no conflicts.
 func (b *Bucket) Merge(b1 Bucket) {
 	b.nodes = merge(b.nodes, b1.nodes)
 
@@ -339,6 +356,8 @@ loop:
 	sort.Sort(b.nodes)
 }
 
+// UpdateIndices is auxilliary function used to update
+// indices of all nodes according to tr.
 func (b *Bucket) UpdateIndices(tr map[int32]int32) Bucket {
 	var (
 		children = make([]Bucket, 0, len(b.children))
@@ -406,6 +425,8 @@ func (b Bucket) Write(w io.Writer) error {
 	return nil
 }
 
+// Read reads Bucket in serialized form:
+// [lnName][Name][lnNodes][Node1]...[NodeN][lnSubprops][sub1]...[subN]
 func (b *Bucket) Read(r io.Reader) error {
 	var ln int32
 	var err error
@@ -449,6 +470,7 @@ func (b *Bucket) Read(r io.Reader) error {
 	return nil
 }
 
+// MarshalBinary implements the encoding.BinaryMarshaler interface.
 func (b Bucket) MarshalBinary() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	if err := b.Write(buf); err != nil {
@@ -457,6 +479,7 @@ func (b Bucket) MarshalBinary() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// UnmarshalBinary implements the encoding.BinaryUnmarshaler interface.
 func (b *Bucket) UnmarshalBinary(data []byte) (err error) {
 	buf := bytes.NewBuffer(data)
 	if err = b.Read(buf); err == io.EOF {
@@ -465,6 +488,7 @@ func (b *Bucket) UnmarshalBinary(data []byte) (err error) {
 	return
 }
 
+// Name return b's short string identifier.
 func (b Bucket) Name() string {
 	return b.Key + ":" + b.Value
 }
@@ -478,6 +502,7 @@ func (b *Bucket) fillNodes() {
 	b.nodes = r
 }
 
+// Nodelist returns slice of nodes belonging to b.
 func (b Bucket) Nodelist() (r []int32) {
 	if b.nodes != nil || len(b.children) == 0 {
 		return b.nodes
@@ -489,10 +514,12 @@ func (b Bucket) Nodelist() (r []int32) {
 	return
 }
 
+// Children returns array of subbuckets of b.
 func (b Bucket) Children() []Bucket {
 	return b.children
 }
 
+// AddNode adds node n with options opts to b.
 func (b *Bucket) AddNode(n int32, opts ...string) error {
 	for _, o := range opts {
 		if err := b.AddBucket(o, []int32{n}); err != nil {
@@ -510,6 +537,7 @@ func splitKV(s string) (string, string, error) {
 	return kv[0], kv[1], nil
 }
 
+// GetNodesByOption returns list of nodes posessing specified options.
 func (b Bucket) GetNodesByOption(opts ...string) []int32 {
 	var nodes []int32
 	for _, opt := range opts {
@@ -533,6 +561,7 @@ func (b *Bucket) addNodes(bs []Bucket, n []int32) error {
 	return nil
 }
 
+// AddBucket add bucket corresponding to option o with nodes n as subbucket to b.
 func (b *Bucket) AddBucket(o string, n []int32) error {
 	if o != Separator && (!strings.HasPrefix(o, Separator) || strings.HasSuffix(o, Separator)) {
 		return errors.Errorf("must start and not end with '%s'", Separator)
@@ -541,6 +570,7 @@ func (b *Bucket) AddBucket(o string, n []int32) error {
 	return b.addNodes(splitProps(o[1:]), n)
 }
 
+// AddChild adds c as direct child to b.
 func (b *Bucket) AddChild(c Bucket) {
 	b.nodes = merge(b.nodes, c.nodes)
 	b.children = append(b.children, c)
@@ -597,6 +627,7 @@ func makeTreeProps(bs []Bucket, n []int32) Bucket {
 	return bs[0]
 }
 
+// Equals checks if b and b1 represent the same Bucket (excluding contained nodes).
 func (b Bucket) Equals(b1 Bucket) bool {
 	return b.Key == b1.Key && b.Value == b1.Value
 }

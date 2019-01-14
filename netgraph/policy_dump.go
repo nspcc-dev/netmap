@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Graph is short synonym for convinience.
 type Graph = *gographviz.Graph
 
 func (b Bucket) dumpTo(g Graph) error {
@@ -50,6 +51,7 @@ func (b Bucket) dumpTo(g Graph) error {
 	return nil
 }
 
+// Dump dumps string representation of Bucket in *.dot format to file name.
 func (b Bucket) Dump(name string) error {
 	s, err := b.Sdump()
 	if err != nil {
@@ -58,6 +60,7 @@ func (b Bucket) Dump(name string) error {
 	return ioutil.WriteFile(name, []byte(s), os.ModePerm)
 }
 
+// Sdump returns string representation of Bucket in *.dot format.
 func (b Bucket) Sdump() (string, error) {
 	g, err := b.toGraph()
 	if err != nil {
@@ -66,6 +69,8 @@ func (b Bucket) Sdump() (string, error) {
 	return g.String(), nil
 }
 
+// SdumpWithSelection returns string representation of Bucket in *.dot format
+// where subgraph b1 is highlighted.
 func (b Bucket) SdumpWithSelection(b1 Bucket) (string, error) {
 	g, err := b.toGraph()
 	if err != nil {
@@ -77,6 +82,8 @@ func (b Bucket) SdumpWithSelection(b1 Bucket) (string, error) {
 	return g.String(), nil
 }
 
+// DumpWithSelection dumps string representation of Bucket in *.dot format
+// where subgraph b1 is highlighted to file name.
 func (b Bucket) DumpWithSelection(name string, b1 Bucket) error {
 	s, err := b.SdumpWithSelection(b1)
 	if err != nil {
