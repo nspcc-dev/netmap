@@ -514,9 +514,19 @@ func TestNetMap_FindGraph(t *testing.T) {
 		{"/Location:NorthAmerica/Country:USA/City:NewYork", []int32{19, 20}},
 		{"/Location:NorthAmerica/Country:Canada", []int32{21, 22}},
 		{"/Location:NorthAmerica/Country:Mexico", []int32{23, 24}},
+		{"/Type:SSD", []int32{6,7,8,13}},
+		{"/Type:HDD", []int32{14,21,22}},
 	}
 	root, err = newRoot(buckets...)
 	g.Expect(err).NotTo(HaveOccurred())
+
+	ss = []Select{{Key: NodesBucket, Count: 6}}
+	c = root.FindGraph(nil, Selector{Selectors: ss})
+	g.Expect(c).NotTo(BeNil())
+	g.Expect(c.Nodelist()).To(HaveLen(6))
+	for _, r := range c.Nodelist() {
+		g.Expect([]int32{1,2,3,6,7,8}).To(ContainElement(r))
+	}
 
 	nodesByLoc = map[string][]int32{
 		"Asia":         root.GetNodesByOption("/Location:Asia"),
