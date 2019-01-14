@@ -159,7 +159,7 @@ func (b Bucket) filterSubtree(filter FilterFunc) *Bucket {
 
 	for _, c := range b.children {
 		if r = c.filterSubtree(filter); r != nil {
-			root.nodes = append(root.nodes, r.nodes...)
+			root.nodes = merge(root.nodes, r.nodes)
 			root.children = append(root.children, *r)
 		}
 	}
