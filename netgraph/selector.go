@@ -3,9 +3,11 @@ package netgraph
 import (
 	"strconv"
 
+	// used by protoc
 	_ "github.com/gogo/protobuf/proto"
 )
 
+// Check checks is Bucket satisfies filter f.
 func (f Filter) Check(b Bucket) bool {
 	if sf := f.GetF(); sf != nil {
 		return f.Key == b.Key && sf.Check(b.Value)
@@ -13,6 +15,8 @@ func (f Filter) Check(b Bucket) bool {
 	return false
 }
 
+// Check returns result of applying sf to value.
+// For numeric comparisons, value is parsed to int64.
 func (sf SimpleFilter) Check(value string) bool {
 	switch sf.Op {
 	case Operation_OR:
@@ -70,6 +74,7 @@ func (sf SimpleFilter) Check(value string) bool {
 	}
 }
 
+// Filter returns sublist of bs, satisfying f.
 func (f Filter) Filter(bs ...Bucket) []Bucket {
 	result := make([]Bucket, 0, len(bs))
 	for _, b := range bs {
@@ -80,6 +85,7 @@ func (f Filter) Filter(bs ...Bucket) []Bucket {
 	return result
 }
 
+// NewFilter constructs SimpleFilter.
 func NewFilter(op Operation, value string) *SimpleFilter {
 	return &SimpleFilter{
 		Op:   op,
@@ -87,6 +93,7 @@ func NewFilter(op Operation, value string) *SimpleFilter {
 	}
 }
 
+// FilterIn returns filter, which checks if value is in specified list.
 func FilterIn(values ...string) *SimpleFilter {
 	fs := make([]*SimpleFilter, 0, len(values))
 	for _, v := range values {
@@ -95,6 +102,7 @@ func FilterIn(values ...string) *SimpleFilter {
 	return FilterOR(fs...)
 }
 
+// FilterNotIn returns filter, which checks if value is not in specified list.
 func FilterNotIn(values ...string) *SimpleFilter {
 	fs := make([]*SimpleFilter, 0, len(values))
 	for _, v := range values {
@@ -103,6 +111,7 @@ func FilterNotIn(values ...string) *SimpleFilter {
 	return FilterAND(fs...)
 }
 
+// FilterOR returns OR combination of filters.
 func FilterOR(fs ...*SimpleFilter) *SimpleFilter {
 	return &SimpleFilter{
 		Op:   Operation_OR,
@@ -110,6 +119,7 @@ func FilterOR(fs ...*SimpleFilter) *SimpleFilter {
 	}
 }
 
+// FilterAND returns AND combination of filters.
 func FilterAND(fs ...*SimpleFilter) *SimpleFilter {
 	return &SimpleFilter{
 		Op:   Operation_AND,
@@ -117,6 +127,7 @@ func FilterAND(fs ...*SimpleFilter) *SimpleFilter {
 	}
 }
 
+// FilterEQ returns filter, which checks if value is equal to v.
 func FilterEQ(v string) *SimpleFilter {
 	return &SimpleFilter{
 		Op:   Operation_EQ,
@@ -124,6 +135,7 @@ func FilterEQ(v string) *SimpleFilter {
 	}
 }
 
+// FilterNE returns filter, which checks if value is not equal to v.
 func FilterNE(v string) *SimpleFilter {
 	return &SimpleFilter{
 		Op:   Operation_NE,
@@ -131,6 +143,7 @@ func FilterNE(v string) *SimpleFilter {
 	}
 }
 
+// FilterGT returns filter, which checks if value is greater than v.
 func FilterGT(v int64) *SimpleFilter {
 	return &SimpleFilter{
 		Op:   Operation_GT,
@@ -138,6 +151,7 @@ func FilterGT(v int64) *SimpleFilter {
 	}
 }
 
+// FilterGE returns filter, which checks if value is greater or equal than v.
 func FilterGE(v int64) *SimpleFilter {
 	return &SimpleFilter{
 		Op:   Operation_GE,
@@ -145,6 +159,7 @@ func FilterGE(v int64) *SimpleFilter {
 	}
 }
 
+// FilterLT returns filter, which checks if value is less than v.
 func FilterLT(v int64) *SimpleFilter {
 	return &SimpleFilter{
 		Op:   Operation_LT,
@@ -152,6 +167,7 @@ func FilterLT(v int64) *SimpleFilter {
 	}
 }
 
+// FilterLE returns filter, which checks if value is less or equal than v.
 func FilterLE(v int64) *SimpleFilter {
 	return &SimpleFilter{
 		Op:   Operation_LE,
