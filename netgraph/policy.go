@@ -16,7 +16,7 @@ const (
 	Separator   = "/"
 
 	// NodesBucket is the name for optionless bucket containing only nodes.
-	NodesBucket = ""
+	NodesBucket = "Node"
 )
 
 type (
