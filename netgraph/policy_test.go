@@ -1082,12 +1082,10 @@ func TestBucket_ShuffledSelection(t *testing.T) {
 	root, err = newRoot(shuffledBuckets...)
 	g.Expect(err).NotTo(HaveOccurred())
 
-	random := []byte("one of the pivots")
-	expr = exp.GetSelection(ss, random)
+	expr = exp.GetSelection(ss, defaultRandom)
 	g.Expect(expr).NotTo(BeNil())
 
-	random = []byte("one of the pivots")
-	r = root.GetSelection(ss, random)
+	r = root.GetSelection(ss, defaultRandom)
 	g.Expect(r).NotTo(BeNil())
 
 	g.Expect(r.nodes).To(Equal(expr.nodes))
