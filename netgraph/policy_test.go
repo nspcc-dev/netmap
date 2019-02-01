@@ -15,7 +15,7 @@ type bucket struct {
 	nodes []int32
 }
 
-var defaultRandom = []byte("This is default random data")
+var defaultPivot = []byte("This is default random data")
 
 func newRoot(bs ...bucket) (b Bucket, err error) {
 	for i := range bs {
@@ -197,7 +197,7 @@ func TestBucket_GetSelection(t *testing.T) {
 		{Key: "Location", Count: 1},
 		{Key: "City", Count: 2},
 	}
-	r = root.GetSelection(ss, defaultRandom)
+	r = root.GetSelection(ss, defaultPivot)
 	g.Expect(r).NotTo(BeNil())
 	g.Expect(r.nodes).To(Equal(exp.nodes))
 
@@ -212,7 +212,7 @@ func TestBucket_GetSelection(t *testing.T) {
 		{Key: "Location", Count: 2},
 		{Key: "City", Count: 1},
 	}
-	r = root.GetSelection(ss, defaultRandom)
+	r = root.GetSelection(ss, defaultPivot)
 	g.Expect(r).NotTo(BeNil())
 	g.Expect(r.nodes).To(Equal(exp.nodes))
 }
@@ -804,10 +804,10 @@ func TestBucket_FindNodes(t *testing.T) {
 	fs = []Filter{
 		{Key: "Location", F: FilterIn("Asia", "Europe")},
 	}
-	ns = root.FindNodes(defaultRandom, Selector{Selectors: ss, Filters: fs})
+	ns = root.FindNodes(defaultPivot, Selector{Selectors: ss, Filters: fs})
 	g.Expect(ns).To(HaveLen(3))
 
-	nscopy := root.FindNodes(defaultRandom, Selector{Selectors: ss})
+	nscopy := root.FindNodes(defaultPivot, Selector{Selectors: ss})
 	g.Expect(nscopy).To(HaveLen(3))
 	g.Expect(ns).To(BeEquivalentTo(nscopy))
 }
@@ -1018,7 +1018,7 @@ func TestBucket_BigMap(t *testing.T) {
 	start = time.Now()
 	r := root.GetMaxSelection(ss, ff)
 	g.Expect(r).NotTo(BeNil())
-	z := r.GetSelection(ss, defaultRandom)
+	z := r.GetSelection(ss, defaultPivot)
 	nodes := z.Nodelist()
 	fmt.Println("Traverse time:\t\t", time.Since(start))
 	g.Expect(len(nodes)).To(Equal(20))
@@ -1082,10 +1082,10 @@ func TestBucket_ShuffledSelection(t *testing.T) {
 	root, err = newRoot(shuffledBuckets...)
 	g.Expect(err).NotTo(HaveOccurred())
 
-	expr = exp.GetSelection(ss, defaultRandom)
+	expr = exp.GetSelection(ss, defaultPivot)
 	g.Expect(expr).NotTo(BeNil())
 
-	r = root.GetSelection(ss, defaultRandom)
+	r = root.GetSelection(ss, defaultPivot)
 	g.Expect(r).NotTo(BeNil())
 
 	g.Expect(r.nodes).To(Equal(expr.nodes))
