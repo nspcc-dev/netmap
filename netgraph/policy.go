@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"encoding/binary"
 	"io"
-	"math/rand"
 	"sort"
 	"strings"
 
+	"github.com/nspcc-dev/hrw"
 	"github.com/pkg/errors"
 )
 
@@ -46,13 +46,17 @@ func (p Int32Slice) Len() int           { return len(p) }
 func (p Int32Slice) Less(i, j int) bool { return p[i] < p[j] }
 func (p Int32Slice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
+func (b Bucket) Hash() uint64 {
+	return hrw.Hash([]byte(b.Key + b.Value))
+}
+
 // FindGraph returns random subgraph, corresponding to specified placement rule.
-func (b *Bucket) FindGraph(rnd *rand.Rand, ss ...Selector) (c *Bucket) {
+func (b *Bucket) FindGraph(pivot []byte, ss ...Selector) (c *Bucket) {
 	var g *Bucket
 
 	c = &Bucket{Key: b.Key, Value: b.Value}
 	for _, s := range ss {
-		if g = b.findGraph(rnd, s.Selectors, s.Filters); g == nil {
+		if g = b.findGraph(pivot, s.Selectors, s.Filters); g == nil {
 			return nil
 		}
 		c.Merge(*g)
@@ -60,26 +64,26 @@ func (b *Bucket) FindGraph(rnd *rand.Rand, ss ...Selector) (c *Bucket) {
 	return
 }
 
-func (b *Bucket) findGraph(rnd *rand.Rand, ss []Select, fs []Filter) (c *Bucket) {
+func (b *Bucket) findGraph(pivot []byte, ss []Select, fs []Filter) (c *Bucket) {
 	if c = b.GetMaxSelection(ss, fs); c != nil {
-		return c.GetSelection(ss, rnd)
+		return c.GetSelection(ss, pivot)
 	}
 	return
 }
 
 // FindNodes returns list of nodes, corresponding to specified placement rule.
-func (b *Bucket) FindNodes(rnd *rand.Rand, ss ...Selector) (nodes []int32) {
+func (b *Bucket) FindNodes(pivot []byte, ss ...Selector) (nodes []int32) {
 	for _, s := range ss {
-		nodes = merge(nodes, b.findNodes(rnd, s.Selectors, s.Filters))
+		nodes = merge(nodes, b.findNodes(pivot, s.Selectors, s.Filters))
 	}
 	return
 }
 
-func (b *Bucket) findNodes(rnd *rand.Rand, ss []Select, fs []Filter) []int32 {
+func (b *Bucket) findNodes(pivot []byte, ss []Select, fs []Filter) []int32 {
 	var c *Bucket
 
 	if c = b.GetMaxSelection(ss, fs); c != nil {
-		if c = c.GetSelection(ss, rnd); c != nil {
+		if c = c.GetSelection(ss, pivot); c != nil {
 			return c.Nodelist()
 		}
 	}
@@ -249,13 +253,17 @@ func (b Bucket) GetMaxSelection(ss []Select, fs []Filter) (r *Bucket) {
 
 // GetSelection returns subgraph, satisfying specified selections.
 // It is assumed that all filters were already applied.
-func (b Bucket) GetSelection(ss []Select, rnd *rand.Rand) *Bucket {
+func (b Bucket) GetSelection(ss []Select, pivot []byte) *Bucket {
 	var (
-		root     = Bucket{Key: b.Key, Value: b.Value}
-		r        *Bucket
-		count, c int
-		cs       []Bucket
+		pivotHash uint64
+		root      = Bucket{Key: b.Key, Value: b.Value}
+		r         *Bucket
+		count, c  int
+		cs        []Bucket
 	)
+	if pivot != nil {
+		pivotHash = hrw.Hash(pivot)
+	}
 
 	if len(ss) == 0 {
 		root.nodes = b.nodes
@@ -267,24 +275,19 @@ func (b Bucket) GetSelection(ss []Select, rnd *rand.Rand) *Bucket {
 	if ss[0].Key == NodesBucket {
 		root.nodes = make(Int32Slice, len(b.nodes))
 		copy(root.nodes, b.nodes)
-
-		if rnd != nil {
-			rnd.Shuffle(len(root.nodes), func(i, j int) {
-				root.nodes[i], root.nodes[j] = root.nodes[j], root.nodes[i]
-			})
+		if pivot != nil {
+			hrw.SortSliceByValue(root.nodes, pivotHash)
 		}
 		root.nodes = root.nodes[:count]
 		return &root
 	}
 
 	cs = getChildrenByKey(b, ss[0])
-	if rnd != nil {
-		rnd.Shuffle(len(cs), func(i, j int) {
-			cs[i], cs[j] = cs[j], cs[i]
-		})
+	if pivot != nil {
+		hrw.SortSliceByValue(cs, pivotHash)
 	}
 	for i := 0; i < len(cs); i++ {
-		if r = cs[i].GetSelection(ss[1:], rnd); r != nil {
+		if r = cs[i].GetSelection(ss[1:], pivot); r != nil {
 			root.Merge(*b.combine(r))
 			if c++; c == count {
 				return &root

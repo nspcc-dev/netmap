@@ -23,6 +23,8 @@ github.com/golang/protobuf/proto
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.4
 github.com/mattn/go-isatty
+# github.com/nspcc-dev/hrw v1.0.1
+github.com/nspcc-dev/hrw
 # github.com/onsi/gomega v1.4.3
 github.com/onsi/gomega
 github.com/onsi/gomega/internal/assertion
@@ -38,6 +40,8 @@ github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 # github.com/pkg/errors v0.8.0
 github.com/pkg/errors
+# github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72
+github.com/spaolacci/murmur3
 # golang.org/x/net v0.0.0-20180906233101-161cd47e91fd
 golang.org/x/net/html/charset
 golang.org/x/net/html
