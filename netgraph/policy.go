@@ -13,7 +13,7 @@ import (
 
 const (
 	// Separator separates key:value pairs in string representation of options.
-	Separator   = "/"
+	Separator = "/"
 
 	// NodesBucket is the name for optionless bucket containing only nodes.
 	NodesBucket = "Node"
@@ -261,7 +261,7 @@ func (b Bucket) GetSelection(ss []Select, pivot []byte) *Bucket {
 		count, c  int
 		cs        []Bucket
 	)
-	if pivot != nil {
+	if len(pivot) != 0 {
 		pivotHash = hrw.Hash(pivot)
 	}
 
@@ -275,7 +275,7 @@ func (b Bucket) GetSelection(ss []Select, pivot []byte) *Bucket {
 	if ss[0].Key == NodesBucket {
 		root.nodes = make(Int32Slice, len(b.nodes))
 		copy(root.nodes, b.nodes)
-		if pivot != nil {
+		if len(pivot) != 0 {
 			hrw.SortSliceByValue(root.nodes, pivotHash)
 		}
 		root.nodes = root.nodes[:count]
@@ -283,7 +283,7 @@ func (b Bucket) GetSelection(ss []Select, pivot []byte) *Bucket {
 	}
 
 	cs = getChildrenByKey(b, ss[0])
-	if pivot != nil {
+	if len(pivot) != 0 {
 		hrw.SortSliceByValue(cs, pivotHash)
 	}
 	for i := 0; i < len(cs); i++ {
