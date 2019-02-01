@@ -15,7 +15,7 @@ type bucket struct {
 	nodes []int32
 }
 
-var defaultRandom = rand.New(rand.NewSource(0))
+var defaultPivot = []byte("This is default random data")
 
 func newRoot(bs ...bucket) (b Bucket, err error) {
 	for i := range bs {
@@ -186,8 +186,8 @@ func TestBucket_GetSelection(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 
 	buckets = []bucket{
-		{"/Location:Europe/Country:Germany/City:Bremen", []int32{27, 29}},
-		{"/Location:Europe/Country:Spain/City:Barcelona", []int32{26, 30}},
+		{"/Location:Europe/Country:Germany/City:Hamburg", []int32{25}},
+		{"/Location:Europe/Country:Spain/City:Madrid", []int32{17, 18}},
 	}
 
 	exp, err = newRoot(buckets...)
@@ -197,12 +197,12 @@ func TestBucket_GetSelection(t *testing.T) {
 		{Key: "Location", Count: 1},
 		{Key: "City", Count: 2},
 	}
-	r = root.GetSelection(ss, defaultRandom)
+	r = root.GetSelection(ss, defaultPivot)
 	g.Expect(r).NotTo(BeNil())
 	g.Expect(r.nodes).To(Equal(exp.nodes))
 
 	buckets = []bucket{
-		{"/Location:Europe/Country:Germany/City:Bremen", []int32{27, 29}},
+		{"/Location:Europe/Country:Spain/City:Madrid", []int32{17, 18}},
 		{"/Location:NorthAmerica/Country:USA/City:NewYork", []int32{19, 20}},
 	}
 	exp, err = newRoot(buckets...)
@@ -212,7 +212,7 @@ func TestBucket_GetSelection(t *testing.T) {
 		{Key: "Location", Count: 2},
 		{Key: "City", Count: 1},
 	}
-	r = root.GetSelection(ss, defaultRandom)
+	r = root.GetSelection(ss, defaultPivot)
 	g.Expect(r).NotTo(BeNil())
 	g.Expect(r.nodes).To(Equal(exp.nodes))
 }
@@ -514,8 +514,8 @@ func TestNetMap_FindGraph(t *testing.T) {
 		{"/Location:NorthAmerica/Country:USA/City:NewYork", []int32{19, 20}},
 		{"/Location:NorthAmerica/Country:Canada", []int32{21, 22}},
 		{"/Location:NorthAmerica/Country:Mexico", []int32{23, 24}},
-		{"/Type:SSD", []int32{6,7,8,13}},
-		{"/Type:HDD", []int32{14,21,22}},
+		{"/Type:SSD", []int32{6, 7, 8, 13}},
+		{"/Type:HDD", []int32{14, 21, 22}},
 	}
 	root, err = newRoot(buckets...)
 	g.Expect(err).NotTo(HaveOccurred())
@@ -525,7 +525,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 	g.Expect(c).NotTo(BeNil())
 	g.Expect(c.Nodelist()).To(HaveLen(6))
 	for _, r := range c.Nodelist() {
-		g.Expect([]int32{1,2,3,6,7,8}).To(ContainElement(r))
+		g.Expect([]int32{1, 2, 3, 6, 7, 8}).To(ContainElement(r))
 	}
 
 	nodesByLoc = map[string][]int32{
@@ -798,17 +798,17 @@ func TestBucket_FindNodes(t *testing.T) {
 
 	// consistency test
 	ss = []Select{
-		{Count: 2, Key: "Country"},
-		{Key: NodesBucket, Count: 2},
+		{Count: 1, Key: "Country"},
+		{Key: NodesBucket, Count: 3},
 	}
 	fs = []Filter{
 		{Key: "Location", F: FilterIn("Asia", "Europe")},
 	}
-	ns = root.FindNodes(nil, Selector{Selectors: ss, Filters: fs})
-	g.Expect(ns).To(HaveLen(4))
+	ns = root.FindNodes(defaultPivot, Selector{Selectors: ss, Filters: fs})
+	g.Expect(ns).To(HaveLen(3))
 
-	nscopy := root.FindNodes(nil, Selector{Selectors: ss})
-	g.Expect(nscopy).To(HaveLen(4))
+	nscopy := root.FindNodes(defaultPivot, Selector{Selectors: ss})
+	g.Expect(nscopy).To(HaveLen(3))
 	g.Expect(ns).To(BeEquivalentTo(nscopy))
 }
 
@@ -1015,12 +1015,10 @@ func TestBucket_BigMap(t *testing.T) {
 		{Key: "Trust", F: FilterEQ("0.8")},
 	}
 
-	var defaultRandom = rand.New(rand.NewSource(0))
-
 	start = time.Now()
 	r := root.GetMaxSelection(ss, ff)
 	g.Expect(r).NotTo(BeNil())
-	z := r.GetSelection(ss, defaultRandom)
+	z := r.GetSelection(ss, defaultPivot)
 	nodes := z.Nodelist()
 	fmt.Println("Traverse time:\t\t", time.Since(start))
 	g.Expect(len(nodes)).To(Equal(20))
@@ -1044,4 +1042,51 @@ func TestBucket_BigMap(t *testing.T) {
 		g.Expect(testcont).To(ContainElement(node))
 	}
 	fmt.Println("Graph size: ", len(graph), " bytes")
+}
+
+func TestBucket_ShuffledSelection(t *testing.T) {
+	var (
+		err             error
+		exp, root       Bucket
+		r, expr         *Bucket
+		buckets         []bucket
+		shuffledBuckets []bucket
+		ss              []Select
+	)
+	g := NewGomegaWithT(t)
+
+	buckets = []bucket{
+		{"/Location:Asia/Country:Korea", []int32{1, 3}},
+		{"/Location:Asia/Country:China", []int32{2}},
+		{"/Location:Europe/Country:Germany/City:Hamburg", []int32{25}},
+		{"/Location:Europe/Country:Germany/City:Bremen", []int32{27, 29}},
+		{"/Location:Europe/Country:Spain/City:Madrid", []int32{17, 18}},
+		{"/Location:Europe/Country:Spain/City:Barcelona", []int32{26, 30}},
+		{"/Location:NorthAmerica/Country:USA/City:NewYork", []int32{19, 20}},
+	}
+
+	ss = []Select{
+		{Key: "City", Count: 3},
+		{Key: NodesBucket, Count: 1},
+	}
+
+	shuffledBuckets = make([]bucket, len(buckets))
+	copy(shuffledBuckets, buckets)
+	rand.Shuffle(len(shuffledBuckets), func(i, j int) {
+		shuffledBuckets[i], shuffledBuckets[j] = shuffledBuckets[j], shuffledBuckets[i]
+	})
+
+	exp, err = newRoot(buckets...)
+	g.Expect(err).NotTo(HaveOccurred())
+
+	root, err = newRoot(shuffledBuckets...)
+	g.Expect(err).NotTo(HaveOccurred())
+
+	expr = exp.GetSelection(ss, defaultPivot)
+	g.Expect(expr).NotTo(BeNil())
+
+	r = root.GetSelection(ss, defaultPivot)
+	g.Expect(r).NotTo(BeNil())
+
+	g.Expect(r.nodes).To(Equal(expr.nodes))
 }

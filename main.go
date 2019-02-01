@@ -2,7 +2,6 @@ package main
 
 import (
 	"io/ioutil"
-	"math/rand"
 	"os"
 	"os/exec"
 	"strconv"
@@ -23,7 +22,7 @@ const stateKey = "state"
 
 var (
 	errWrongFormat = errors.New("wrong command format")
-	defaultSource  = rand.NewSource(0)
+	defaultSource  = []byte("default-source-of-bytes")
 )
 
 var commands = []*ishell.Cmd{
@@ -156,7 +155,7 @@ func write(b *netgraph.Bucket, name string) error {
 func getSelection(c *ishell.Context) {
 	s := getState(c)
 	if b := s.b.GetMaxSelection(s.ss, s.fs); b != nil {
-		if b = b.GetSelection(s.ss, rand.New(defaultSource)); b != nil {
+		if b = b.GetSelection(s.ss, defaultSource); b != nil {
 			c.Println(b.Nodelist())
 			return
 		}
@@ -187,7 +186,7 @@ func dumpNetmap(c *ishell.Context) {
 		}
 	}
 	if b := s.b.GetMaxSelection(s.ss, s.fs); b != nil {
-		if b = b.GetSelection(s.ss, rand.New(defaultSource)); b != nil {
+		if b = b.GetSelection(s.ss, defaultSource); b != nil {
 			if err := s.b.DumpWithSelection(c.Args[0], *b); err != nil {
 				c.Err(err)
 				return
