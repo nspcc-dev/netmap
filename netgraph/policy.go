@@ -51,7 +51,7 @@ func (b Bucket) Hash() uint64 {
 }
 
 // FindGraph returns random subgraph, corresponding to specified placement rule.
-func (b *Bucket) FindGraph(pivot []byte, ss ...Selector) (c *Bucket) {
+func (b *Bucket) FindGraph(pivot []byte, ss ...SFGroup) (c *Bucket) {
 	var g *Bucket
 
 	c = &Bucket{Key: b.Key, Value: b.Value}
@@ -72,7 +72,7 @@ func (b *Bucket) findGraph(pivot []byte, ss []Select, fs []Filter) (c *Bucket) {
 }
 
 // FindNodes returns list of nodes, corresponding to specified placement rule.
-func (b *Bucket) FindNodes(pivot []byte, ss ...Selector) (nodes []int32) {
+func (b *Bucket) FindNodes(pivot []byte, ss ...SFGroup) (nodes []int32) {
 	for _, s := range ss {
 		nodes = merge(nodes, b.findNodes(pivot, s.Selectors, s.Filters))
 	}
