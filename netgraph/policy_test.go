@@ -521,7 +521,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 
 	ss = []Select{{Key: NodesBucket, Count: 6}}
-	c = root.FindGraph(nil, Selector{Selectors: ss})
+	c = root.FindGraph(nil, SFGroup{Selectors: ss})
 	g.Expect(c).NotTo(BeNil())
 	g.Expect(c.Nodelist()).To(HaveLen(6))
 	for _, r := range c.Nodelist() {
@@ -545,7 +545,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 			{Key: "Location", F: FilterNE(loc)},
 		}
 
-		c = root.FindGraph(nil, Selector{Selectors: ss, Filters: fs})
+		c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
 		g.Expect(c).NotTo(BeNil())
 		for _, n := range c.Nodelist() {
 			g.Expect(nodesByLoc[loc]).NotTo(ContainElement(n))
@@ -563,7 +563,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 	exp, err = newRoot(bucket{"/Location:Europe/Country:Russia/City:Moscow", []int32{13, 14}})
 	g.Expect(err).NotTo(HaveOccurred())
 
-	c = root.FindGraph(nil, Selector{Selectors: ss, Filters: fs})
+	c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(c).NotTo(BeNil())
 	g.Expect(c).To(Equal(&exp))
 
@@ -582,11 +582,11 @@ func TestNetMap_FindGraph(t *testing.T) {
 	fs = []Filter{
 		{Key: "Location", F: FilterEQ("Asia")},
 	}
-	c = root.FindGraph(nil, Selector{Selectors: ss, Filters: fs})
+	c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(c).To(Equal(&exp))
 
 	ss[1].Count = 4
-	c = root.FindGraph(nil, Selector{Selectors: ss, Filters: fs})
+	c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(c).To(BeNil())
 
 	buckets = []bucket{
@@ -604,7 +604,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 	fs = []Filter{
 		{Key: "Location", F: FilterNotIn("Asia", "Europe")},
 	}
-	c = root.FindGraph(nil, Selector{Selectors: ss, Filters: fs})
+	c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(c).To(Equal(&exp))
 	for _, n := range ns {
 		g.Expect(nodesByLoc["NorthAmerica"]).To(ContainElement(n))
@@ -619,14 +619,14 @@ func TestNetMap_FindGraph(t *testing.T) {
 		{Key: "Location", F: FilterNotIn("Asia", "Europe")},
 		{Key: "Country", F: FilterNotIn("USA", "Canada", "Mexico")},
 	}
-	c = root.FindGraph(nil, Selector{Selectors: ss, Filters: fs})
+	c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(c).To(BeNil())
 
 	ss = []Select{
 		{Key: "Location", Count: 2},
 		{Key: NodesBucket, Count: 3},
 	}
-	c = root.FindGraph(nil, Selector{Selectors: ss})
+	c = root.FindGraph(nil, SFGroup{Selectors: ss})
 	g.Expect(c).NotTo(BeNil())
 
 	ss = []Select{
@@ -636,7 +636,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 	fs = []Filter{
 		{Key: "Location", F: FilterEQ("Europe")},
 	}
-	c = root.FindGraph(nil, Selector{Selectors: ss, Filters: fs})
+	c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(c).NotTo(BeNil())
 	for _, n := range c.Nodelist() {
 		g.Expect(nodesByLoc["Europe"]).To(ContainElement(n))
@@ -652,15 +652,15 @@ func TestNetMap_FindGraph(t *testing.T) {
 
 	// multiple selectors
 	c = root.FindGraph(nil,
-		Selector{
+		SFGroup{
 			Selectors: []Select{{Key: "City", Count: 1}},
 			Filters:   []Filter{{Key: "City", F: FilterEQ("Paris")}},
 		},
-		Selector{
+		SFGroup{
 			Selectors: []Select{{Key: "City", Count: 1}},
 			Filters:   []Filter{{Key: "City", F: FilterEQ("Moscow")}},
 		},
-		Selector{
+		SFGroup{
 			Selectors: []Select{{Key: "Country", Count: 1}},
 			Filters:   []Filter{{Key: "Country", F: FilterEQ("Canada")}},
 		},
@@ -714,7 +714,7 @@ func TestBucket_FindNodes(t *testing.T) {
 		fs = []Filter{
 			{Key: "Location", F: FilterNE(loc)},
 		}
-		ns = root.FindNodes(nil, Selector{Selectors: ss, Filters: fs})
+		ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
 		g.Expect(ns).NotTo(HaveLen(0))
 		for _, n := range ns {
 			g.Expect(nodesByLoc[loc]).NotTo(ContainElement(n))
@@ -729,7 +729,7 @@ func TestBucket_FindNodes(t *testing.T) {
 		fs = []Filter{
 			{Key: "Country", F: FilterEQ(c)},
 		}
-		ns = root.FindNodes(nil, Selector{Selectors: ss, Filters: fs})
+		ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
 		g.Expect(ns).NotTo(HaveLen(0))
 		for _, n := range ns {
 			g.Expect(nodesByLoc[c]).To(ContainElement(n))
@@ -744,11 +744,11 @@ func TestBucket_FindNodes(t *testing.T) {
 	fs = []Filter{
 		{Key: "Location", F: FilterEQ("Asia")},
 	}
-	ns = root.FindNodes(nil, Selector{Selectors: ss, Filters: fs})
+	ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(ns).NotTo(HaveLen(0))
 
 	ss[1].Count = 4
-	ns = root.FindNodes(nil, Selector{Selectors: ss, Filters: fs})
+	ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(ns).To(HaveLen(0))
 
 	// check with NotIn filter
@@ -758,7 +758,7 @@ func TestBucket_FindNodes(t *testing.T) {
 	fs = []Filter{
 		{Key: "Location", F: FilterNotIn("Asia", "Europe")},
 	}
-	ns = root.FindNodes(nil, Selector{Selectors: ss, Filters: fs})
+	ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(ns).NotTo(HaveLen(0))
 	for _, n := range ns {
 		g.Expect(nodesByLoc["NorthAmerica"]).To(ContainElement(n))
@@ -773,14 +773,14 @@ func TestBucket_FindNodes(t *testing.T) {
 		{Key: "Location", F: FilterNotIn("Asia", "Europe")},
 		{Key: "Country", F: FilterNotIn("USA", "Canada", "Mexico")},
 	}
-	ns = root.FindNodes(nil, Selector{Selectors: ss, Filters: fs})
+	ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(ns).To(HaveLen(0))
 
 	ss = []Select{
 		{Key: "Location", Count: 2},
 		{Key: NodesBucket, Count: 3},
 	}
-	ns = root.FindNodes(nil, Selector{Selectors: ss})
+	ns = root.FindNodes(nil, SFGroup{Selectors: ss})
 	g.Expect(ns).To(HaveLen(6))
 
 	ss = []Select{
@@ -790,7 +790,7 @@ func TestBucket_FindNodes(t *testing.T) {
 	fs = []Filter{
 		{Key: "Location", F: FilterEQ("Europe")},
 	}
-	ns = root.FindNodes(nil, Selector{Selectors: ss, Filters: fs})
+	ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(ns).To(HaveLen(6))
 	for _, n := range ns {
 		g.Expect(nodesByLoc["Europe"]).To(ContainElement(n))
@@ -804,10 +804,10 @@ func TestBucket_FindNodes(t *testing.T) {
 	fs = []Filter{
 		{Key: "Location", F: FilterIn("Asia", "Europe")},
 	}
-	ns = root.FindNodes(defaultPivot, Selector{Selectors: ss, Filters: fs})
+	ns = root.FindNodes(defaultPivot, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(ns).To(HaveLen(3))
 
-	nscopy := root.FindNodes(defaultPivot, Selector{Selectors: ss})
+	nscopy := root.FindNodes(defaultPivot, SFGroup{Selectors: ss})
 	g.Expect(nscopy).To(HaveLen(3))
 	g.Expect(ns).To(BeEquivalentTo(nscopy))
 }
