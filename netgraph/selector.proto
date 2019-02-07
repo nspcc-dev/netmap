@@ -16,6 +16,11 @@ enum Operation {
     AND = 8;
 }
 
+message PlacementRule {
+    int32 ReplFactor = 1;
+    repeated SFGroup SFGroups = 2 [(gogoproto.nullable) = false];
+}
+
 message SFGroup {
     repeated Filter Filters = 1 [(gogoproto.nullable) = false];
     repeated Select Selectors = 2 [(gogoproto.nullable) = false];

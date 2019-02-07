@@ -1,5 +1,10 @@
 # NetMap
 
+[![Build Status](https://travis-ci.org/nspcc-dev/netmap.svg?branch=master)](https://travis-ci.org/nspcc-dev/netmap)
+[![codecov](https://codecov.io/gh/nspcc-dev/netmap/badge.svg)](https://codecov.io/gh/nspcc-dev/netmap)
+[![Report](https://goreportcard.com/badge/github.com/nspcc-dev/netmap)](https://goreportcard.com/report/github.com/nspcc-dev/netmap)
+[![GitHub release](https://img.shields.io/github/release/nspcc-dev/netmap.svg)](https://github.com/nspcc-dev/netmap)
+
 ## Demo
 
 [![asciicast](https://asciinema.org/a/d5DW80hzdN1fOBn8azBYZIkan.svg)](https://asciinema.org/a/d5DW80hzdN1fOBn8azBYZIkan)

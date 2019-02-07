@@ -27,8 +27,8 @@ var (
 
 var commands = []*ishell.Cmd{
 	{
-		Name:     "get-selection",
-		Help:     "apply current selection rules",
+		Name: "get-selection",
+		Help: "apply current selection rules",
 		LongHelp: `Usage: get-selection
 
 Example:
@@ -37,7 +37,7 @@ Example:
 >>> filter Location NE Asia
 >>> get-selection
 [13 14]`,
-		Func:     getSelection,
+		Func: getSelection,
 	},
 	{
 		Name:     "clear-selection",
