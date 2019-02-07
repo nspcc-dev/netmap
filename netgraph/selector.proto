@@ -17,7 +17,7 @@ enum Operation {
 }
 
 message PlacementRule {
-    int32 ReplFactor = 1;
+    uint32 ReplFactor = 1;
     repeated SFGroup SFGroups = 2 [(gogoproto.nullable) = false];
 }
 
