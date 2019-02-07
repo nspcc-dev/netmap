@@ -29,4 +29,4 @@ up: down
 
 # Regenerate proto files:
 protoc:
-	@find . -type f -name '*.proto' -not -path './vendor/*' -exec protoc --gofast_out=. '{}' \;
+	@find . -type f -name '*.proto' -not -path './vendor/*' -exec protoc --proto_path=$(GOPATH)/src:. --gofast_out=. '{}' \;

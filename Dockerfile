@@ -8,11 +8,9 @@ COPY . /nmrepl
 
 WORKDIR /nmrepl
 
-# https://github.com/golang/go/wiki/Modules#how-do-i-use-vendoring-with-modules-is-vendoring-going-away
-# go build -mod=vendor
 RUN set -x \
     && export CGO_ENABLED=0 \
-    && go build -mod=vendor -o /go/bin/nmrepl ./main.go
+    && go build -o /go/bin/nmrepl ./cmd/repl
 
 # Executable image
 FROM alpine:3.8
