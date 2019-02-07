@@ -46,6 +46,7 @@ func (p Int32Slice) Len() int           { return len(p) }
 func (p Int32Slice) Less(i, j int) bool { return p[i] < p[j] }
 func (p Int32Slice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
+// Hash uses murmur3 hash to return uint64
 func (b Bucket) Hash() uint64 {
 	return hrw.Hash([]byte(b.Key + b.Value))
 }
@@ -359,7 +360,7 @@ loop:
 	sort.Sort(b.nodes)
 }
 
-// UpdateIndices is auxilliary function used to update
+// UpdateIndices is auxiliary function used to update
 // indices of all nodes according to tr.
 func (b *Bucket) UpdateIndices(tr map[int32]int32) Bucket {
 	var (
@@ -540,7 +541,7 @@ func splitKV(s string) (string, string, error) {
 	return kv[0], kv[1], nil
 }
 
-// GetNodesByOption returns list of nodes posessing specified options.
+// GetNodesByOption returns list of nodes possessing specified options.
 func (b Bucket) GetNodesByOption(opts ...string) []int32 {
 	var nodes []int32
 	for _, opt := range opts {
