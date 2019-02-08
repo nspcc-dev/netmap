@@ -239,7 +239,7 @@ func addNode(c *ishell.Context) {
 		return
 	}
 	s := getState(c)
-	if err = s.b.AddNode(int32(node), c.Args[1:]...); err != nil {
+	if err = s.b.AddNode(uint32(node), c.Args[1:]...); err != nil {
 		c.Err(err)
 	}
 }
