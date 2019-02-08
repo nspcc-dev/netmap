@@ -12,7 +12,7 @@ import (
 
 type bucket struct {
 	name  string
-	nodes []int32
+	nodes []uint32
 }
 
 var defaultPivot = []byte("This is default random data")
@@ -36,16 +36,16 @@ func TestBucket_IsValid(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	buckets = []bucket{
-		{"/Location:Europe/Country:Germany", []int32{1, 3}},
-		{"/Location:Asia/Country:China", []int32{2}},
+		{"/Location:Europe/Country:Germany", []uint32{1, 3}},
+		{"/Location:Asia/Country:China", []uint32{2}},
 	}
 	b, err = newRoot(buckets...)
 	g.Expect(err).NotTo(HaveOccurred())
 	g.Expect(b.IsValid()).To(BeTrue(), "simple bucket is valid")
 
 	buckets = []bucket{
-		{"/Location:Europe/Country:Germany", []int32{1, 3}},
-		{"/Location:Asia/Country:China", []int32{1, 2}},
+		{"/Location:Europe/Country:Germany", []uint32{1, 3}},
+		{"/Location:Asia/Country:China", []uint32{1, 2}},
 	}
 	b, err = newRoot(buckets...)
 	g.Expect(err).NotTo(HaveOccurred())
@@ -54,12 +54,12 @@ func TestBucket_IsValid(t *testing.T) {
 	b = Bucket{
 		Key:   "Location",
 		Value: "Europe",
-		nodes: []int32{1, 2},
+		nodes: []uint32{1, 2},
 		children: []Bucket{
 			{
 				Key:   "Country",
 				Value: "Germany",
-				nodes: []int32{1, 2, 3},
+				nodes: []uint32{1, 2, 3},
 			},
 		},
 	}
@@ -69,12 +69,12 @@ func TestBucket_IsValid(t *testing.T) {
 	b = Bucket{
 		Key:   "Location",
 		Value: "Europe",
-		nodes: []int32{1, 2, 3},
+		nodes: []uint32{1, 2, 3},
 		children: []Bucket{
 			{
 				Key:   "Country",
 				Value: "Germany",
-				nodes: []int32{2},
+				nodes: []uint32{2},
 			},
 		},
 	}
@@ -91,8 +91,8 @@ func TestBucket_checkConflicts(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	buckets = []bucket{
-		{"/Location:Europe/Country:Germany", []int32{1, 3}},
-		{"/Location:Asia/Country:China", []int32{1}},
+		{"/Location:Europe/Country:Germany", []uint32{1, 3}},
+		{"/Location:Asia/Country:China", []uint32{1}},
 	}
 	b1, err = newRoot(buckets[:1]...)
 	g.Expect(err).NotTo(HaveOccurred())
@@ -104,8 +104,8 @@ func TestBucket_checkConflicts(t *testing.T) {
 	g.Expect(b2.CheckConflicts(b1)).To(BeTrue())
 
 	buckets = []bucket{
-		{"/Location:Europe/Country:Germany", []int32{1, 3}},
-		{"/Location:Europe/Country:Germany", []int32{2, 3}},
+		{"/Location:Europe/Country:Germany", []uint32{1, 3}},
+		{"/Location:Europe/Country:Germany", []uint32{2, 3}},
 	}
 	b1, err = newRoot(buckets[:1]...)
 	g.Expect(err).NotTo(HaveOccurred())
@@ -127,8 +127,8 @@ func TestBucket_Merge(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	buckets = []bucket{
-		{"/Location:Europe/Country:Germany", []int32{1, 3}},
-		{"/Location:Asia/Country:China", []int32{2}},
+		{"/Location:Europe/Country:Germany", []uint32{1, 3}},
+		{"/Location:Asia/Country:China", []uint32{2}},
 	}
 	b1, err = newRoot(buckets[:1]...)
 	g.Expect(err).NotTo(HaveOccurred())
@@ -143,11 +143,11 @@ func TestBucket_Merge(t *testing.T) {
 	g.Expect(b1).To(Equal(exp))
 
 	buckets = []bucket{
-		{"/Location:Europe/Country:Germany", []int32{1, 3}},
-		{"/Location:Asia/Country:Korea", []int32{5}},
+		{"/Location:Europe/Country:Germany", []uint32{1, 3}},
+		{"/Location:Asia/Country:Korea", []uint32{5}},
 
-		{"/Location:Asia/Country:China", []int32{2, 6}},
-		{"/Location:Europe/Country:Germany", []int32{3, 4}},
+		{"/Location:Asia/Country:China", []uint32{2, 6}},
+		{"/Location:Europe/Country:Germany", []uint32{3, 4}},
 	}
 	b1, err = newRoot(buckets[:2]...)
 	g.Expect(err).NotTo(HaveOccurred())
@@ -173,21 +173,21 @@ func TestBucket_GetSelection(t *testing.T) {
 
 	g := NewGomegaWithT(t)
 	buckets = []bucket{
-		{"/Location:Asia/Country:Korea", []int32{1, 3}},
-		{"/Location:Asia/Country:China", []int32{2}},
-		{"/Location:Europe/Country:Germany/City:Hamburg", []int32{25}},
-		{"/Location:Europe/Country:Germany/City:Bremen", []int32{27, 29}},
-		{"/Location:Europe/Country:Spain/City:Madrid", []int32{17, 18}},
-		{"/Location:Europe/Country:Spain/City:Barcelona", []int32{26, 30}},
-		{"/Location:NorthAmerica/Country:USA/City:NewYork", []int32{19, 20}},
+		{"/Location:Asia/Country:Korea", []uint32{1, 3}},
+		{"/Location:Asia/Country:China", []uint32{2}},
+		{"/Location:Europe/Country:Germany/City:Hamburg", []uint32{25}},
+		{"/Location:Europe/Country:Germany/City:Bremen", []uint32{27, 29}},
+		{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
+		{"/Location:Europe/Country:Spain/City:Barcelona", []uint32{26, 30}},
+		{"/Location:NorthAmerica/Country:USA/City:NewYork", []uint32{19, 20}},
 	}
 
 	root, err = newRoot(buckets...)
 	g.Expect(err).NotTo(HaveOccurred())
 
 	buckets = []bucket{
-		{"/Location:Europe/Country:Germany/City:Hamburg", []int32{25}},
-		{"/Location:Europe/Country:Spain/City:Madrid", []int32{17, 18}},
+		{"/Location:Europe/Country:Germany/City:Hamburg", []uint32{25}},
+		{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
 	}
 
 	exp, err = newRoot(buckets...)
@@ -202,8 +202,8 @@ func TestBucket_GetSelection(t *testing.T) {
 	g.Expect(r.nodes).To(Equal(exp.nodes))
 
 	buckets = []bucket{
-		{"/Location:Europe/Country:Spain/City:Madrid", []int32{17, 18}},
-		{"/Location:NorthAmerica/Country:USA/City:NewYork", []int32{19, 20}},
+		{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
+		{"/Location:NorthAmerica/Country:USA/City:NewYork", []uint32{19, 20}},
 	}
 	exp, err = newRoot(buckets...)
 	g.Expect(err).NotTo(HaveOccurred())
@@ -230,32 +230,32 @@ func TestBucket_GetMaxSelection(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	buckets = []bucket{
-		{"/Location:Asia/Country:Korea", []int32{1, 3}},
-		{"/Location:Asia/Country:China", []int32{2}},
-		{"/Location:Asia/Country:Taiwan", []int32{4, 5}},
-		{"/Location:Europe/Country:France", []int32{6, 7, 8}},
-		{"/Location:Europe/Country:Germany/City:Berlin", []int32{9, 10}},
-		{"/Location:Europe/Country:Germany/City:Hamburg", []int32{25}},
-		{"/Location:Europe/Country:Germany/City:Bremen", []int32{27, 29}},
-		{"/Location:Europe/Country:Italy/City:Rome", []int32{11, 12}},
-		{"/Location:Europe/Country:Russia", []int32{13, 14}},
-		{"/Location:Europe/Country:Switzerland", []int32{15, 16}},
-		{"/Location:Europe/Country:Spain/City:Madrid", []int32{17, 18}},
-		{"/Location:Europe/Country:Spain/City:Barcelona", []int32{26, 30}},
-		{"/Location:NorthAmerica/Country:USA", []int32{19, 20}},
-		{"/Location:NorthAmerica/Country:Canada", []int32{21, 22}},
-		{"/Location:NorthAmerica/Country:Mexico", []int32{23, 24}},
+		{"/Location:Asia/Country:Korea", []uint32{1, 3}},
+		{"/Location:Asia/Country:China", []uint32{2}},
+		{"/Location:Asia/Country:Taiwan", []uint32{4, 5}},
+		{"/Location:Europe/Country:France", []uint32{6, 7, 8}},
+		{"/Location:Europe/Country:Germany/City:Berlin", []uint32{9, 10}},
+		{"/Location:Europe/Country:Germany/City:Hamburg", []uint32{25}},
+		{"/Location:Europe/Country:Germany/City:Bremen", []uint32{27, 29}},
+		{"/Location:Europe/Country:Italy/City:Rome", []uint32{11, 12}},
+		{"/Location:Europe/Country:Russia", []uint32{13, 14}},
+		{"/Location:Europe/Country:Switzerland", []uint32{15, 16}},
+		{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
+		{"/Location:Europe/Country:Spain/City:Barcelona", []uint32{26, 30}},
+		{"/Location:NorthAmerica/Country:USA", []uint32{19, 20}},
+		{"/Location:NorthAmerica/Country:Canada", []uint32{21, 22}},
+		{"/Location:NorthAmerica/Country:Mexico", []uint32{23, 24}},
 	}
 
 	root, err = newRoot(buckets...)
 	g.Expect(err).NotTo(HaveOccurred())
 
 	buckets = []bucket{
-		{"/Location:Europe/Country:Germany/City:Berlin", []int32{9, 10}},
-		{"/Location:Europe/Country:Germany/City:Hamburg", []int32{25}},
-		{"/Location:Europe/Country:Germany/City:Bremen", []int32{27, 29}},
-		{"/Location:Europe/Country:Spain/City:Madrid", []int32{17, 18}},
-		{"/Location:Europe/Country:Spain/City:Barcelona", []int32{26, 30}},
+		{"/Location:Europe/Country:Germany/City:Berlin", []uint32{9, 10}},
+		{"/Location:Europe/Country:Germany/City:Hamburg", []uint32{25}},
+		{"/Location:Europe/Country:Germany/City:Bremen", []uint32{27, 29}},
+		{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
+		{"/Location:Europe/Country:Spain/City:Barcelona", []uint32{26, 30}},
 	}
 	exp, err = newRoot(buckets...)
 	g.Expect(err).NotTo(HaveOccurred())
@@ -285,12 +285,12 @@ func TestBucket_GetMaxSelection(t *testing.T) {
 	g.Expect(r).To(Equal(&exp))
 
 	buckets = []bucket{
-		{"/Location:Europe/Country:Germany/City:Berlin", []int32{9, 10}},
-		{"/Location:Europe/Country:Germany/City:Hamburg", []int32{25}},
-		{"/Location:Europe/Country:Germany/City:Bremen", []int32{27, 29}},
-		{"/Location:Europe/Country:Italy/City:Rome", []int32{11, 12}},
-		{"/Location:Europe/Country:Spain/City:Madrid", []int32{17, 18}},
-		{"/Location:Europe/Country:Spain/City:Barcelona", []int32{26, 30}},
+		{"/Location:Europe/Country:Germany/City:Berlin", []uint32{9, 10}},
+		{"/Location:Europe/Country:Germany/City:Hamburg", []uint32{25}},
+		{"/Location:Europe/Country:Germany/City:Bremen", []uint32{27, 29}},
+		{"/Location:Europe/Country:Italy/City:Rome", []uint32{11, 12}},
+		{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
+		{"/Location:Europe/Country:Spain/City:Barcelona", []uint32{26, 30}},
 	}
 	exp, err = newRoot(buckets...)
 	g.Expect(err).NotTo(HaveOccurred())
@@ -313,21 +313,21 @@ func TestNetMap_GetNodesByOption(t *testing.T) {
 	fr = Bucket{
 		Key:   "Country",
 		Value: "France",
-		nodes: []int32{0, 1, 3},
+		nodes: []uint32{0, 1, 3},
 	}
 	ge = Bucket{
 		Key:   "Country",
 		Value: "Germany",
-		nodes: []int32{2, 4},
+		nodes: []uint32{2, 4},
 	}
 	eu = Bucket{
 		Key:      "Location",
 		Value:    "Europe",
-		nodes:    []int32{0, 1, 2, 3, 4},
+		nodes:    []uint32{0, 1, 2, 3, 4},
 		children: []Bucket{fr, ge},
 	}
 	root = Bucket{
-		nodes:    []int32{0, 1, 2, 3, 4, 5, 6},
+		nodes:    []uint32{0, 1, 2, 3, 4, 5, 6},
 		children: []Bucket{eu},
 	}
 
@@ -383,15 +383,15 @@ func TestBucket_AddBucket(t *testing.T) {
 func TestBucket_AddNode(t *testing.T) {
 	var (
 		nroot Bucket
-		ns    []int32
+		ns    []uint32
 		err   error
 	)
 
 	g := NewGomegaWithT(t)
 
 	nroot, err = newRoot(
-		bucket{"/Location:Europe/Country:France", []int32{1, 3}},
-		bucket{"/Location:Europe/Country:Germany", []int32{7}},
+		bucket{"/Location:Europe/Country:France", []uint32{1, 3}},
+		bucket{"/Location:Europe/Country:Germany", []uint32{7}},
 	)
 	g.Expect(err).NotTo(HaveOccurred())
 
@@ -440,8 +440,8 @@ func TestBucket_MarshalBinary(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	before, err = newRoot(
-		bucket{"/Location:Europe", []int32{1}},
-		bucket{"/Location:Asia", []int32{2}},
+		bucket{"/Location:Europe", []uint32{1}},
+		bucket{"/Location:Asia", []uint32{2}},
 	)
 	g.Expect(err).NotTo(HaveOccurred())
 
@@ -454,7 +454,7 @@ func TestBucket_MarshalBinary(t *testing.T) {
 
 func TestBucket_Nodelist(t *testing.T) {
 	var (
-		nodes   []int32
+		nodes   []uint32
 		root    Bucket
 		buckets []bucket
 		err     error
@@ -462,18 +462,18 @@ func TestBucket_Nodelist(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	buckets = []bucket{
-		{"/Location:Asia/Country:Korea", []int32{1, 3}},
-		{"/Location:Asia/Country:China", []int32{2}},
-		{"/Location:Asia/Country:Taiwan", []int32{4, 5}},
-		{"/Location:Europe/Country:France", []int32{6, 7, 8}},
-		{"/Location:Europe/Country:Germany/City:Berlin", []int32{9, 10}},
-		{"/Location:Europe/Country:Italy/City:Rome", []int32{11, 12}},
-		{"/Location:Europe/Country:Russia", []int32{13, 14}},
-		{"/Location:Europe/Country:Switzerland", []int32{15, 16}},
-		{"/Location:Europe/Country:Spain/City:Madrid", []int32{17, 18}},
-		{"/Location:NorthAmerica/Country:USA", []int32{19, 20}},
-		{"/Location:NorthAmerica/Country:Canada", []int32{21, 22}},
-		{"/Location:NorthAmerica/Country:Mexico", []int32{23, 24}},
+		{"/Location:Asia/Country:Korea", []uint32{1, 3}},
+		{"/Location:Asia/Country:China", []uint32{2}},
+		{"/Location:Asia/Country:Taiwan", []uint32{4, 5}},
+		{"/Location:Europe/Country:France", []uint32{6, 7, 8}},
+		{"/Location:Europe/Country:Germany/City:Berlin", []uint32{9, 10}},
+		{"/Location:Europe/Country:Italy/City:Rome", []uint32{11, 12}},
+		{"/Location:Europe/Country:Russia", []uint32{13, 14}},
+		{"/Location:Europe/Country:Switzerland", []uint32{15, 16}},
+		{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
+		{"/Location:NorthAmerica/Country:USA", []uint32{19, 20}},
+		{"/Location:NorthAmerica/Country:Canada", []uint32{21, 22}},
+		{"/Location:NorthAmerica/Country:Mexico", []uint32{23, 24}},
 	}
 
 	root, err = newRoot(buckets...)
@@ -484,15 +484,15 @@ func TestBucket_Nodelist(t *testing.T) {
 	root.fillNodes()
 	nodes = root.Nodelist()
 	g.Expect(nodes).To(HaveLen(24))
-	for i := int32(1); i <= 24; i++ {
+	for i := uint32(1); i <= 24; i++ {
 		g.Expect(nodes).To(ContainElement(i))
 	}
 }
 
 func TestNetMap_FindGraph(t *testing.T) {
 	var (
-		ns         []int32
-		nodesByLoc map[string][]int32
+		ns         []uint32
+		nodesByLoc map[string][]uint32
 		root, exp  Bucket
 		c          *Bucket
 		ss         []Select
@@ -503,19 +503,19 @@ func TestNetMap_FindGraph(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	buckets := []bucket{
-		{"/Location:Asia/Country:Korea", []int32{1, 3}},
-		{"/Location:Asia/Country:China", []int32{2}},
-		{"/Location:Europe/Country:France/City:Paris", []int32{6, 7, 8}},
-		{"/Location:Europe/Country:Germany", []int32{9, 10}},
-		{"/Location:Europe/Country:Italy", []int32{11, 12}},
-		{"/Location:Europe/Country:Russia/City:Moscow", []int32{13, 14}},
-		{"/Location:Europe/Country:Switzerland", []int32{15, 16}},
-		{"/Location:Europe/Country:Spain/City:Madrid", []int32{17, 18}},
-		{"/Location:NorthAmerica/Country:USA/City:NewYork", []int32{19, 20}},
-		{"/Location:NorthAmerica/Country:Canada", []int32{21, 22}},
-		{"/Location:NorthAmerica/Country:Mexico", []int32{23, 24}},
-		{"/Type:SSD", []int32{6, 7, 8, 13}},
-		{"/Type:HDD", []int32{14, 21, 22}},
+		{"/Location:Asia/Country:Korea", []uint32{1, 3}},
+		{"/Location:Asia/Country:China", []uint32{2}},
+		{"/Location:Europe/Country:France/City:Paris", []uint32{6, 7, 8}},
+		{"/Location:Europe/Country:Germany", []uint32{9, 10}},
+		{"/Location:Europe/Country:Italy", []uint32{11, 12}},
+		{"/Location:Europe/Country:Russia/City:Moscow", []uint32{13, 14}},
+		{"/Location:Europe/Country:Switzerland", []uint32{15, 16}},
+		{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
+		{"/Location:NorthAmerica/Country:USA/City:NewYork", []uint32{19, 20}},
+		{"/Location:NorthAmerica/Country:Canada", []uint32{21, 22}},
+		{"/Location:NorthAmerica/Country:Mexico", []uint32{23, 24}},
+		{"/Type:SSD", []uint32{6, 7, 8, 13}},
+		{"/Type:HDD", []uint32{14, 21, 22}},
 	}
 	root, err = newRoot(buckets...)
 	g.Expect(err).NotTo(HaveOccurred())
@@ -525,10 +525,10 @@ func TestNetMap_FindGraph(t *testing.T) {
 	g.Expect(c).NotTo(BeNil())
 	g.Expect(c.Nodelist()).To(HaveLen(6))
 	for _, r := range c.Nodelist() {
-		g.Expect([]int32{1, 2, 3, 6, 7, 8}).To(ContainElement(r))
+		g.Expect([]uint32{1, 2, 3, 6, 7, 8}).To(ContainElement(r))
 	}
 
-	nodesByLoc = map[string][]int32{
+	nodesByLoc = map[string][]uint32{
 		"Asia":         root.GetNodesByOption("/Location:Asia"),
 		"Europe":       root.GetNodesByOption("/Location:Europe"),
 		"NorthAmerica": root.GetNodesByOption("/Location:NorthAmerica"),
@@ -560,7 +560,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 		{Key: "Country", F: FilterEQ("Russia")},
 	}
 
-	exp, err = newRoot(bucket{"/Location:Europe/Country:Russia/City:Moscow", []int32{13, 14}})
+	exp, err = newRoot(bucket{"/Location:Europe/Country:Russia/City:Moscow", []uint32{13, 14}})
 	g.Expect(err).NotTo(HaveOccurred())
 
 	c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
@@ -568,8 +568,8 @@ func TestNetMap_FindGraph(t *testing.T) {
 	g.Expect(c).To(Equal(&exp))
 
 	buckets = []bucket{
-		{"/Location:Asia/Country:Korea", []int32{1, 3}},
-		{"/Location:Asia/Country:China", []int32{2}},
+		{"/Location:Asia/Country:Korea", []uint32{1, 3}},
+		{"/Location:Asia/Country:China", []uint32{2}},
 	}
 	exp, err = newRoot(buckets...)
 	g.Expect(err).NotTo(HaveOccurred())
@@ -590,9 +590,9 @@ func TestNetMap_FindGraph(t *testing.T) {
 	g.Expect(c).To(BeNil())
 
 	buckets = []bucket{
-		{"/Location:NorthAmerica/Country:USA/City:NewYork", []int32{19, 20}},
-		{"/Location:NorthAmerica/Country:Canada", []int32{21, 22}},
-		{"/Location:NorthAmerica/Country:Mexico", []int32{23, 24}},
+		{"/Location:NorthAmerica/Country:USA/City:NewYork", []uint32{19, 20}},
+		{"/Location:NorthAmerica/Country:Canada", []uint32{21, 22}},
+		{"/Location:NorthAmerica/Country:Mexico", []uint32{23, 24}},
 	}
 	exp, err = newRoot(buckets...)
 	g.Expect(err).NotTo(HaveOccurred())
@@ -643,9 +643,9 @@ func TestNetMap_FindGraph(t *testing.T) {
 	}
 
 	buckets = []bucket{
-		{"/Location:Europe/Country:France/City:Paris", []int32{6, 7, 8}},
-		{"/Location:Europe/Country:Russia/City:Moscow", []int32{13, 14}},
-		{"/Location:NorthAmerica/Country:Canada", []int32{21, 22}},
+		{"/Location:Europe/Country:France/City:Paris", []uint32{6, 7, 8}},
+		{"/Location:Europe/Country:Russia/City:Moscow", []uint32{13, 14}},
+		{"/Location:NorthAmerica/Country:Canada", []uint32{21, 22}},
 	}
 	exp, err = newRoot(buckets...)
 	g.Expect(err).NotTo(HaveOccurred())
@@ -670,8 +670,8 @@ func TestNetMap_FindGraph(t *testing.T) {
 
 func TestBucket_FindNodes(t *testing.T) {
 	var (
-		ns         []int32
-		nodesByLoc map[string][]int32
+		ns         []uint32
+		nodesByLoc map[string][]uint32
 		root       Bucket
 		ss         []Select
 		fs         []Filter
@@ -681,24 +681,24 @@ func TestBucket_FindNodes(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	buckets := []bucket{
-		{"/Location:Asia/Country:Korea", []int32{1, 3}},
-		{"/Location:Asia/Country:China", []int32{2}},
-		{"/Location:Asia/Country:Taiwan", []int32{4, 5}},
-		{"/Location:Europe/Country:France", []int32{6, 7, 8}},
-		{"/Location:Europe/Country:Germany", []int32{9, 10}},
-		{"/Location:Europe/Country:Italy", []int32{11, 12}},
-		{"/Location:Europe/Country:Russia", []int32{13, 14}},
-		{"/Location:Europe/Country:Switzerland", []int32{15, 16}},
-		{"/Location:Europe/Country:Spain", []int32{17, 18}},
-		{"/Location:NorthAmerica/Country:USA", []int32{19, 20}},
-		{"/Location:NorthAmerica/Country:Canada", []int32{21, 22}},
-		{"/Location:NorthAmerica/Country:Mexico", []int32{23, 24}},
+		{"/Location:Asia/Country:Korea", []uint32{1, 3}},
+		{"/Location:Asia/Country:China", []uint32{2}},
+		{"/Location:Asia/Country:Taiwan", []uint32{4, 5}},
+		{"/Location:Europe/Country:France", []uint32{6, 7, 8}},
+		{"/Location:Europe/Country:Germany", []uint32{9, 10}},
+		{"/Location:Europe/Country:Italy", []uint32{11, 12}},
+		{"/Location:Europe/Country:Russia", []uint32{13, 14}},
+		{"/Location:Europe/Country:Switzerland", []uint32{15, 16}},
+		{"/Location:Europe/Country:Spain", []uint32{17, 18}},
+		{"/Location:NorthAmerica/Country:USA", []uint32{19, 20}},
+		{"/Location:NorthAmerica/Country:Canada", []uint32{21, 22}},
+		{"/Location:NorthAmerica/Country:Mexico", []uint32{23, 24}},
 	}
 
 	root, err = newRoot(buckets...)
 	g.Expect(err).NotTo(HaveOccurred())
 
-	nodesByLoc = map[string][]int32{
+	nodesByLoc = map[string][]uint32{
 		"Asia":         root.GetNodesByOption("/Location:Asia"),
 		"Europe":       root.GetNodesByOption("/Location:Europe"),
 		"NorthAmerica": root.GetNodesByOption("/Location:NorthAmerica"),
@@ -843,9 +843,9 @@ func TestBucket_MarshalBinaryStress(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	before, _ = newRoot()
-	for i := int32(1); i < 1000; i++ {
+	for i := uint32(1); i < 1000; i++ {
 		s += fmt.Sprintf("/k%d:v%d", i, i)
-		err := before.AddBucket(s, []int32{i})
+		err := before.AddBucket(s, []uint32{i})
 		g.Expect(err).NotTo(HaveOccurred())
 	}
 
@@ -866,9 +866,9 @@ func Benchmark_MarshalStress(b *testing.B) {
 	g := NewGomegaWithT(b)
 
 	before, _ = newRoot()
-	for i := int32(1); i < 1000; i++ {
+	for i := uint32(1); i < 1000; i++ {
 		s += fmt.Sprintf("/k%d:v%d", i, i)
-		err := before.AddBucket(s, []int32{i})
+		err := before.AddBucket(s, []uint32{i})
 		g.Expect(err).NotTo(HaveOccurred())
 	}
 
@@ -888,7 +888,7 @@ func Benchmark_MarshalStress(b *testing.B) {
 func TestBucket_BigMap(t *testing.T) {
 	var (
 		loc, country, city, dc, n int
-		total                     int32
+		total                     uint32
 		err                       error
 		locLim                    = 10
 		countryLim                = 10
@@ -907,14 +907,14 @@ func TestBucket_BigMap(t *testing.T) {
 	templateStorage := "/Storage:"
 
 	maxtotal := locLim * countryLim * cityLim * dcLim * nLim
-	storagessd := make([]int32, 0, maxtotal)
-	storagemem := make([]int32, 0, maxtotal)
-	storagetape := make([]int32, 0, maxtotal)
-	trust9 := make([]int32, 0, maxtotal)
-	trust8 := make([]int32, 0, maxtotal)
-	trust7 := make([]int32, 0, maxtotal)
-	trust6 := make([]int32, 0, maxtotal)
-	trust5 := make([]int32, 0, maxtotal)
+	storagessd := make([]uint32, 0, maxtotal)
+	storagemem := make([]uint32, 0, maxtotal)
+	storagetape := make([]uint32, 0, maxtotal)
+	trust9 := make([]uint32, 0, maxtotal)
+	trust8 := make([]uint32, 0, maxtotal)
+	trust7 := make([]uint32, 0, maxtotal)
+	trust6 := make([]uint32, 0, maxtotal)
+	trust5 := make([]uint32, 0, maxtotal)
 
 	start := time.Now()
 	for loc = 0; loc < locLim; loc++ {
@@ -928,7 +928,7 @@ func TestBucket_BigMap(t *testing.T) {
 				cityB, _ := newRoot()
 				for dc = 0; dc < dcLim; dc++ {
 					dcStr := ciStr + "dc" + strconv.Itoa(dc)
-					ns := make([]int32, 0, nLim)
+					ns := make([]uint32, 0, nLim)
 					for n = 0; n < nLim; n++ {
 						ns = append(ns, total)
 						total++
@@ -1023,7 +1023,7 @@ func TestBucket_BigMap(t *testing.T) {
 	fmt.Println("Traverse time:\t\t", time.Since(start))
 	g.Expect(len(nodes)).To(Equal(20))
 
-	var testcont []int32
+	var testcont []uint32
 	for _, b := range root.children {
 		if b.Key == "Storage" && b.Value == "SSD" {
 			testcont = b.nodes
@@ -1056,13 +1056,13 @@ func TestBucket_ShuffledSelection(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	buckets = []bucket{
-		{"/Location:Asia/Country:Korea", []int32{1, 3}},
-		{"/Location:Asia/Country:China", []int32{2}},
-		{"/Location:Europe/Country:Germany/City:Hamburg", []int32{25}},
-		{"/Location:Europe/Country:Germany/City:Bremen", []int32{27, 29}},
-		{"/Location:Europe/Country:Spain/City:Madrid", []int32{17, 18}},
-		{"/Location:Europe/Country:Spain/City:Barcelona", []int32{26, 30}},
-		{"/Location:NorthAmerica/Country:USA/City:NewYork", []int32{19, 20}},
+		{"/Location:Asia/Country:Korea", []uint32{1, 3}},
+		{"/Location:Asia/Country:China", []uint32{2}},
+		{"/Location:Europe/Country:Germany/City:Hamburg", []uint32{25}},
+		{"/Location:Europe/Country:Germany/City:Bremen", []uint32{27, 29}},
+		{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
+		{"/Location:Europe/Country:Spain/City:Barcelona", []uint32{26, 30}},
+		{"/Location:NorthAmerica/Country:USA/City:NewYork", []uint32{19, 20}},
 	}
 
 	ss = []Select{

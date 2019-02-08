@@ -1,6 +1,6 @@
 package netmap
 
-func getNodes(b Bucket, path []Bucket) (nodes []int32) {
+func getNodes(b Bucket, path []Bucket) (nodes []uint32) {
 	if len(path) == 0 {
 		return b.Nodelist()
 	}
@@ -12,7 +12,7 @@ func getNodes(b Bucket, path []Bucket) (nodes []int32) {
 	return nil
 }
 
-func contains(nodes []int32, n int32) bool {
+func contains(nodes []uint32, n uint32) bool {
 	for _, i := range nodes {
 		if i == n {
 			return true
@@ -21,7 +21,7 @@ func contains(nodes []int32, n int32) bool {
 	return false
 }
 
-func intersect(a, b []int32) []int32 {
+func intersect(a, b []uint32) []uint32 {
 	if a == nil {
 		return b
 	}
@@ -29,7 +29,7 @@ func intersect(a, b []int32) []int32 {
 	var (
 		la, lb = len(a), len(b)
 		l      = min(la, lb)
-		c      = make([]int32, 0, l)
+		c      = make([]uint32, 0, l)
 	)
 
 	for i, j := 0, 0; i < la && j < lb; {
@@ -48,8 +48,8 @@ func intersect(a, b []int32) []int32 {
 	return c
 }
 
-func diff(a []int32, b map[int32]struct{}) (c []int32) {
-	c = make([]int32, 0, len(a))
+func diff(a []uint32, b map[uint32]struct{}) (c []uint32) {
+	c = make([]uint32, 0, len(a))
 	for _, e := range a {
 		if _, ok := b[e]; !ok {
 			c = append(c, e)
@@ -58,7 +58,7 @@ func diff(a []int32, b map[int32]struct{}) (c []int32) {
 	return
 }
 
-func union(a, b []int32) []int32 {
+func union(a, b []uint32) []uint32 {
 	if a == nil {
 		return b
 	} else if b == nil {
@@ -68,7 +68,7 @@ func union(a, b []int32) []int32 {
 	var (
 		la, lb = len(a), len(b)
 		l      = la + lb
-		c      = make([]int32, 0, l)
+		c      = make([]uint32, 0, l)
 		i, j   int
 	)
 

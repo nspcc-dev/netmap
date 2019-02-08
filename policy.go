@@ -31,20 +31,20 @@ type (
 	Bucket struct {
 		Key      string
 		Value    string
-		nodes    Int32Slice
+		nodes    Uint32Slice
 		children []Bucket
 	}
 
-	// Int32Slice is generic type for more convenient sorting.
-	Int32Slice []int32
+	// Uint32Slice is generic type for more convenient sorting.
+	Uint32Slice []uint32
 
 	// FilterFunc is generic type for filtering function on nodes.
-	FilterFunc func([]int32) []int32
+	FilterFunc func([]uint32) []uint32
 )
 
-func (p Int32Slice) Len() int           { return len(p) }
-func (p Int32Slice) Less(i, j int) bool { return p[i] < p[j] }
-func (p Int32Slice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+func (p Uint32Slice) Len() int           { return len(p) }
+func (p Uint32Slice) Less(i, j int) bool { return p[i] < p[j] }
+func (p Uint32Slice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
 
 // Hash uses murmur3 hash to return uint64
 func (b Bucket) Hash() uint64 {
@@ -73,14 +73,14 @@ func (b *Bucket) findGraph(pivot []byte, ss []Select, fs []Filter) (c *Bucket) {
 }
 
 // FindNodes returns list of nodes, corresponding to specified placement rule.
-func (b *Bucket) FindNodes(pivot []byte, ss ...SFGroup) (nodes []int32) {
+func (b *Bucket) FindNodes(pivot []byte, ss ...SFGroup) (nodes []uint32) {
 	for _, s := range ss {
 		nodes = merge(nodes, b.findNodes(pivot, s.Selectors, s.Filters))
 	}
 	return
 }
 
-func (b *Bucket) findNodes(pivot []byte, ss []Select, fs []Filter) []int32 {
+func (b *Bucket) findNodes(pivot []byte, ss []Select, fs []Filter) []uint32 {
 	var c *Bucket
 
 	if c = b.GetMaxSelection(ss, fs); c != nil {
@@ -98,7 +98,7 @@ func (b Bucket) Copy() Bucket {
 		Value: b.Value,
 	}
 	if b.nodes != nil {
-		bc.nodes = make(Int32Slice, len(b.nodes))
+		bc.nodes = make(Uint32Slice, len(b.nodes))
 		copy(bc.nodes, b.nodes)
 	}
 	if b.children != nil {
@@ -116,8 +116,8 @@ func (b Bucket) Copy() Bucket {
 // - there must be no nodes belonging to 2 buckets
 func (b Bucket) IsValid() bool {
 	var (
-		ns    Int32Slice
-		nodes = make(Int32Slice, 0, len(b.nodes))
+		ns    Uint32Slice
+		nodes = make(Uint32Slice, 0, len(b.nodes))
 	)
 
 	if len(b.children) == 0 {
@@ -136,7 +136,7 @@ func (b Bucket) IsValid() bool {
 	return len(nodes) == len(ns)
 }
 
-func (b Bucket) findForbidden(fs []Filter) (forbidden []int32) {
+func (b Bucket) findForbidden(fs []Filter) (forbidden []uint32) {
 	// if root does not satisfy any filter it must be forbidden
 	for _, f := range fs {
 		if b.Key == f.Key && !f.Check(b) {
@@ -239,14 +239,14 @@ func (b Bucket) getMaxSelectionC(ss []Select, filter FilterFunc, cut bool) (*Buc
 func (b Bucket) GetMaxSelection(ss []Select, fs []Filter) (r *Bucket) {
 	var (
 		forbidden = b.findForbidden(fs)
-		forbidMap = make(map[int32]struct{}, len(forbidden))
+		forbidMap = make(map[uint32]struct{}, len(forbidden))
 	)
 
 	for _, c := range forbidden {
 		forbidMap[c] = struct{}{}
 	}
 
-	r, _ = b.getMaxSelection(ss, func(nodes []int32) []int32 {
+	r, _ = b.getMaxSelection(ss, func(nodes []uint32) []uint32 {
 		return diff(nodes, forbidMap)
 	})
 	return
@@ -274,7 +274,7 @@ func (b Bucket) GetSelection(ss []Select, pivot []byte) *Bucket {
 
 	count = int(ss[0].Count)
 	if ss[0].Key == NodesBucket {
-		root.nodes = make(Int32Slice, len(b.nodes))
+		root.nodes = make(Uint32Slice, len(b.nodes))
 		copy(root.nodes, b.nodes)
 		if len(pivot) != 0 {
 			hrw.SortSliceByValue(root.nodes, pivotHash)
@@ -362,10 +362,10 @@ loop:
 
 // UpdateIndices is auxiliary function used to update
 // indices of all nodes according to tr.
-func (b *Bucket) UpdateIndices(tr map[int32]int32) Bucket {
+func (b *Bucket) UpdateIndices(tr map[uint32]uint32) Bucket {
 	var (
 		children = make([]Bucket, 0, len(b.children))
-		nodes    = make(Int32Slice, 0, len(b.nodes))
+		nodes    = make(Uint32Slice, 0, len(b.nodes))
 	)
 
 	for i := range b.children {
@@ -453,7 +453,7 @@ func (b *Bucket) Read(r io.Reader) error {
 		return err
 	}
 	if ln > 0 {
-		b.nodes = make([]int32, ln)
+		b.nodes = make([]uint32, ln)
 		if err = binary.Read(r, binary.BigEndian, &b.nodes); err != nil {
 			return err
 		}
@@ -507,7 +507,7 @@ func (b *Bucket) fillNodes() {
 }
 
 // Nodelist returns slice of nodes belonging to b.
-func (b Bucket) Nodelist() (r []int32) {
+func (b Bucket) Nodelist() (r []uint32) {
 	if b.nodes != nil || len(b.children) == 0 {
 		return b.nodes
 	}
@@ -524,9 +524,9 @@ func (b Bucket) Children() []Bucket {
 }
 
 // AddNode adds node n with options opts to b.
-func (b *Bucket) AddNode(n int32, opts ...string) error {
+func (b *Bucket) AddNode(n uint32, opts ...string) error {
 	for _, o := range opts {
-		if err := b.AddBucket(o, []int32{n}); err != nil {
+		if err := b.AddBucket(o, []uint32{n}); err != nil {
 			return err
 		}
 	}
@@ -542,15 +542,15 @@ func splitKV(s string) (string, string, error) {
 }
 
 // GetNodesByOption returns list of nodes possessing specified options.
-func (b Bucket) GetNodesByOption(opts ...string) []int32 {
-	var nodes []int32
+func (b Bucket) GetNodesByOption(opts ...string) []uint32 {
+	var nodes []uint32
 	for _, opt := range opts {
 		nodes = intersect(nodes, getNodes(b, splitProps(opt[1:])))
 	}
 	return nodes
 }
 
-func (b *Bucket) addNodes(bs []Bucket, n []int32) error {
+func (b *Bucket) addNodes(bs []Bucket, n []uint32) error {
 	b.nodes = merge(b.nodes, n)
 	if len(bs) == 0 {
 		return nil
@@ -566,7 +566,7 @@ func (b *Bucket) addNodes(bs []Bucket, n []int32) error {
 }
 
 // AddBucket add bucket corresponding to option o with nodes n as subbucket to b.
-func (b *Bucket) AddBucket(o string, n []int32) error {
+func (b *Bucket) AddBucket(o string, n []uint32) error {
 	if o != Separator && (!strings.HasPrefix(o, Separator) || strings.HasSuffix(o, Separator)) {
 		return errors.Errorf("must start and not end with '%s'", Separator)
 	}
@@ -590,13 +590,13 @@ func splitProps(o string) []Bucket {
 	return props
 }
 
-func merge(a, b []int32) []int32 {
+func merge(a, b []uint32) []uint32 {
 	if a == nil {
 		return b
 	}
 
 	la, lb := len(a), len(b)
-	c := make([]int32, 0, la+lb)
+	c := make([]uint32, 0, la+lb)
 loop:
 	for i, j := 0, 0; i < la || j < lb; {
 		switch true {
@@ -622,7 +622,7 @@ loop:
 	return c
 }
 
-func makeTreeProps(bs []Bucket, n []int32) Bucket {
+func makeTreeProps(bs []Bucket, n []uint32) Bucket {
 	bs[0].nodes = n
 	for i := len(bs) - 1; i > 0; i-- {
 		bs[i].nodes = n
