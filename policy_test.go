@@ -332,7 +332,7 @@ func TestNetMap_GetNodesByOption(t *testing.T) {
 	}
 
 	n1 := root.GetNodesByOption("/Location:Europe/Country:Germany")
-	g.Expect(n1).To(Equal([]int32{2, 4}))
+	g.Expect(n1).To(Equal([]uint32{2, 4}))
 
 	n2 := root.GetNodesByOption("/Location:Europe/Country:Russia")
 	g.Expect(n2).To(HaveLen(0))
@@ -396,10 +396,10 @@ func TestBucket_AddNode(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 
 	ns = nroot.GetNodesByOption("/Location:Europe/Country:Germany")
-	g.Expect(ns).To(Equal([]int32{7}))
+	g.Expect(ns).To(Equal([]uint32{7}))
 
 	ns = nroot.GetNodesByOption("/Location:Europe")
-	g.Expect(ns).To(Equal([]int32{1, 3, 7}))
+	g.Expect(ns).To(Equal([]uint32{1, 3, 7}))
 }
 
 func TestNetMap_AddNode(t *testing.T) {
@@ -424,10 +424,10 @@ func TestNetMap_AddNode(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 
 	ns := root.GetNodesByOption("/Location:Europe/Country:Germany")
-	g.Expect(ns).To(Equal([]int32{3}))
+	g.Expect(ns).To(Equal([]uint32{3}))
 
 	ns = root.GetNodesByOption("/Location:Europe")
-	g.Expect(ns).To(Equal([]int32{1, 2, 3}))
+	g.Expect(ns).To(Equal([]uint32{1, 2, 3}))
 }
 
 func TestBucket_MarshalBinary(t *testing.T) {
