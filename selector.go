@@ -97,8 +97,7 @@ func NewFilter(op Operation, value string) *SimpleFilter {
 func FilterIn(values ...string) *SimpleFilter {
 	fs := make([]*SimpleFilter, 0, len(values))
 	for _, v := range values {
-		f := FilterEQ(v)
-		fs = append(fs, f)
+		fs = append(fs, FilterEQ(v))
 	}
 	return FilterOR(fs...)
 }
@@ -107,8 +106,7 @@ func FilterIn(values ...string) *SimpleFilter {
 func FilterNotIn(values ...string) *SimpleFilter {
 	fs := make([]*SimpleFilter, 0, len(values))
 	for _, v := range values {
-		f := FilterNE(v)
-		fs = append(fs, f)
+		fs = append(fs, FilterNE(v))
 	}
 	return FilterAND(fs...)
 }
