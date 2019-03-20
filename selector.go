@@ -97,7 +97,8 @@ func NewFilter(op Operation, value string) *SimpleFilter {
 func FilterIn(values ...string) *SimpleFilter {
 	fs := make([]*SimpleFilter, 0, len(values))
 	for _, v := range values {
-		fs = append(fs, FilterEQ(v))
+		f := FilterEQ(v)
+		fs = append(fs, f)
 	}
 	return FilterOR(fs...)
 }
@@ -106,24 +107,35 @@ func FilterIn(values ...string) *SimpleFilter {
 func FilterNotIn(values ...string) *SimpleFilter {
 	fs := make([]*SimpleFilter, 0, len(values))
 	for _, v := range values {
-		fs = append(fs, FilterNE(v))
+		f := FilterNE(v)
+		fs = append(fs, f)
 	}
 	return FilterAND(fs...)
 }
 
 // FilterOR returns OR combination of filters.
 func FilterOR(fs ...*SimpleFilter) *SimpleFilter {
+	args := make([]SimpleFilter, 0, len(fs))
+	for _, f := range fs {
+		args = append(args, *f)
+	}
+
 	return &SimpleFilter{
 		Op:   Operation_OR,
-		Args: &SimpleFilter_FArgs{FArgs: &SimpleFilters{Filters: fs}},
+		Args: &SimpleFilter_FArgs{FArgs: &SimpleFilters{Filters: args}},
 	}
 }
 
 // FilterAND returns AND combination of filters.
 func FilterAND(fs ...*SimpleFilter) *SimpleFilter {
+	args := make([]SimpleFilter, 0, len(fs))
+	for _, f := range fs {
+		args = append(args, *f)
+	}
+
 	return &SimpleFilter{
 		Op:   Operation_AND,
-		Args: &SimpleFilter_FArgs{FArgs: &SimpleFilters{Filters: fs}},
+		Args: &SimpleFilter_FArgs{FArgs: &SimpleFilters{Filters: args}},
 	}
 }
 

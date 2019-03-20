@@ -37,7 +37,7 @@ enum Type {
 }
 
 message SimpleFilters {
-    repeated SimpleFilter Filters = 1;
+    repeated SimpleFilter Filters = 1 [(gogoproto.nullable) = false];
 }
 
 message SimpleFilter {
