@@ -57,7 +57,7 @@ func (b *Bucket) FindGraph(pivot []byte, ss ...SFGroup) (c *Bucket) {
 
 	c = &Bucket{Key: b.Key, Value: b.Value}
 	for _, s := range ss {
-		if g = b.findGraph(pivot, s.Selectors, s.Filters); g == nil {
+		if g = b.findGraph(pivot, s); g == nil {
 			return nil
 		}
 		c.Merge(*g)
@@ -65,9 +65,9 @@ func (b *Bucket) FindGraph(pivot []byte, ss ...SFGroup) (c *Bucket) {
 	return
 }
 
-func (b *Bucket) findGraph(pivot []byte, ss []Select, fs []Filter) (c *Bucket) {
-	if c = b.GetMaxSelection(ss, fs); c != nil {
-		return c.GetSelection(ss, pivot)
+func (b *Bucket) findGraph(pivot []byte, s SFGroup) (c *Bucket) {
+	if c = b.GetMaxSelection(s); c != nil {
+		return c.GetSelection(s.Selectors, pivot)
 	}
 	return
 }
@@ -75,16 +75,16 @@ func (b *Bucket) findGraph(pivot []byte, ss []Select, fs []Filter) (c *Bucket) {
 // FindNodes returns list of nodes, corresponding to specified placement rule.
 func (b *Bucket) FindNodes(pivot []byte, ss ...SFGroup) (nodes []uint32) {
 	for _, s := range ss {
-		nodes = merge(nodes, b.findNodes(pivot, s.Selectors, s.Filters))
+		nodes = merge(nodes, b.findNodes(pivot, s))
 	}
 	return
 }
 
-func (b *Bucket) findNodes(pivot []byte, ss []Select, fs []Filter) []uint32 {
+func (b *Bucket) findNodes(pivot []byte, s SFGroup) []uint32 {
 	var c *Bucket
 
-	if c = b.GetMaxSelection(ss, fs); c != nil {
-		if c = c.GetSelection(ss, pivot); c != nil {
+	if c = b.GetMaxSelection(s); c != nil {
+		if c = c.GetSelection(s.Selectors, pivot); c != nil {
 			return c.Nodelist()
 		}
 	}
@@ -236,17 +236,20 @@ func (b Bucket) getMaxSelectionC(ss []Select, filter FilterFunc, cut bool) (*Buc
 
 // GetMaxSelection returns 'maximal container' -- subgraph which contains
 // any other subgraph satisfying specified selects and filters.
-func (b Bucket) GetMaxSelection(ss []Select, fs []Filter) (r *Bucket) {
+func (b Bucket) GetMaxSelection(s SFGroup) (r *Bucket) {
 	var (
-		forbidden = b.findForbidden(fs)
-		forbidMap = make(map[uint32]struct{}, len(forbidden))
+		forbidden = b.findForbidden(s.Filters)
+		forbidMap = make(map[uint32]struct{}, len(forbidden)+len(s.Exclude))
 	)
 
 	for _, c := range forbidden {
 		forbidMap[c] = struct{}{}
 	}
+	for _, c := range s.Exclude {
+		forbidMap[c] = struct{}{}
+	}
 
-	r, _ = b.getMaxSelection(ss, func(nodes []uint32) []uint32 {
+	r, _ = b.getMaxSelection(s.Selectors, func(nodes []uint32) []uint32 {
 		return diff(nodes, forbidMap)
 	})
 	return

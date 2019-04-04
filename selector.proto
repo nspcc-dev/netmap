@@ -24,6 +24,7 @@ message PlacementRule {
 message SFGroup {
     repeated Filter Filters = 1 [(gogoproto.nullable) = false];
     repeated Select Selectors = 2 [(gogoproto.nullable) = false];
+    repeated uint32 Exclude = 3;
 }
 
 message Select {

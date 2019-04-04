@@ -154,7 +154,8 @@ func write(b *netmap.Bucket, name string) error {
 
 func getSelection(c *ishell.Context) {
 	s := getState(c)
-	if b := s.b.GetMaxSelection(s.ss, s.fs); b != nil {
+	b := s.b.GetMaxSelection(netmap.SFGroup{Selectors: s.ss, Filters: s.fs})
+	if b != nil {
 		if b = b.GetSelection(s.ss, defaultSource); b != nil {
 			c.Println(b.Nodelist())
 			return
@@ -185,7 +186,8 @@ func dumpNetmap(c *ishell.Context) {
 			return
 		}
 	}
-	if b := s.b.GetMaxSelection(s.ss, s.fs); b != nil {
+	b := s.b.GetMaxSelection(netmap.SFGroup{Selectors: s.ss, Filters: s.fs})
+	if b != nil {
 		if b = b.GetSelection(s.ss, defaultSource); b != nil {
 			if err := s.b.DumpWithSelection(c.Args[0], *b); err != nil {
 				c.Err(err)
