@@ -263,7 +263,7 @@ func TestBucket_GetMaxSelection(t *testing.T) {
 	// check if subgraph with simple select without node-filters works
 	ss = []Select{{Key: "Country", Count: 1}}
 	fs = []Filter{{Key: "Country", F: FilterIn("Germany", "Spain")}}
-	r = root.GetMaxSelection(ss, fs)
+	r = root.GetMaxSelection(SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(r).To(Equal(&exp))
 
 	// check if select with count works
@@ -271,7 +271,7 @@ func TestBucket_GetMaxSelection(t *testing.T) {
 		{Key: "Country", Count: 1},
 		{Key: "City", Count: 2},
 	}
-	r = root.GetMaxSelection(ss, nil)
+	r = root.GetMaxSelection(SFGroup{Selectors: ss})
 	g.Expect(r).To(Equal(&exp))
 
 	// check if count on nodes also works
@@ -281,8 +281,29 @@ func TestBucket_GetMaxSelection(t *testing.T) {
 		{Key: NodesBucket, Count: 4},
 	}
 	fs = []Filter{{Key: "Location", F: FilterEQ("Europe")}}
-	r = root.GetMaxSelection(ss, fs)
+	r = root.GetMaxSelection(SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(r).To(Equal(&exp))
+
+	buckets = []bucket{
+		{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
+		{"/Location:Europe/Country:Spain/City:Barcelona", []uint32{26, 30}},
+	}
+	exp, err = newRoot(buckets...)
+	g.Expect(err).NotTo(HaveOccurred())
+
+	r = root.GetMaxSelection(SFGroup{
+		Selectors: ss,
+		Filters:   fs,
+		Exclude:   []uint32{9, 27, 29},
+	})
+	g.Expect(r).To(Equal(&exp))
+
+	r = root.GetMaxSelection(SFGroup{
+		Selectors: ss,
+		Filters:   fs,
+		Exclude:   []uint32{9, 27, 29, 26},
+	})
+	g.Expect(r).To(BeNil())
 
 	buckets = []bucket{
 		{"/Location:Europe/Country:Germany/City:Berlin", []uint32{9, 10}},
@@ -299,7 +320,7 @@ func TestBucket_GetMaxSelection(t *testing.T) {
 	ss = []Select{
 		{Key: "City", Count: 2},
 	}
-	r = root.GetMaxSelection(ss, nil)
+	r = root.GetMaxSelection(SFGroup{Selectors: ss})
 	g.Expect(r).To(Equal(&exp))
 }
 
@@ -1016,7 +1037,7 @@ func TestBucket_BigMap(t *testing.T) {
 	}
 
 	start = time.Now()
-	r := root.GetMaxSelection(ss, ff)
+	r := root.GetMaxSelection(SFGroup{Selectors: ss, Filters: ff})
 	g.Expect(r).NotTo(BeNil())
 	z := r.GetSelection(ss, defaultPivot)
 	nodes := z.Nodelist()
