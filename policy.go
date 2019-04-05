@@ -239,18 +239,18 @@ func (b Bucket) getMaxSelectionC(ss []Select, filter FilterFunc, cut bool) (*Buc
 func (b Bucket) GetMaxSelection(s SFGroup) (r *Bucket) {
 	var (
 		forbidden = b.findForbidden(s.Filters)
-		forbidMap = make(map[uint32]struct{}, len(forbidden)+len(s.Exclude))
+		excludes  = make(map[uint32]struct{}, len(forbidden)+len(s.Exclude))
 	)
 
 	for _, c := range forbidden {
-		forbidMap[c] = struct{}{}
+		excludes[c] = struct{}{}
 	}
 	for _, c := range s.Exclude {
-		forbidMap[c] = struct{}{}
+		excludes[c] = struct{}{}
 	}
 
 	r, _ = b.getMaxSelection(s.Selectors, func(nodes []uint32) []uint32 {
-		return diff(nodes, forbidMap)
+		return diff(nodes, excludes)
 	})
 	return
 }
