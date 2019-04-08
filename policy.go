@@ -277,6 +277,10 @@ func (b Bucket) GetSelection(ss []Select, pivot []byte) *Bucket {
 
 	count = int(ss[0].Count)
 	if ss[0].Key == NodesBucket {
+		if len(b.nodes) < count {
+			return nil
+		}
+
 		root.nodes = make(Uint32Slice, len(b.nodes))
 		copy(root.nodes, b.nodes)
 		if len(pivot) != 0 {
