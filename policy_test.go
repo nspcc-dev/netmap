@@ -26,6 +26,22 @@ func newRoot(bs ...bucket) (b Bucket, err error) {
 	return
 }
 
+func TestBucket_RuntimeError(t *testing.T) {
+	g := NewGomegaWithT(t)
+	buckets := []bucket{
+		{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
+	}
+	root, err := newRoot(buckets...)
+	g.Expect(err).NotTo(HaveOccurred())
+
+	ss := []Select{
+		{Key: NodesBucket, Count: 3}, // available only two
+	}
+
+	r := root.GetSelection(ss, defaultPivot)
+	g.Expect(r).To(BeNil())
+}
+
 func TestBucket_IsValid(t *testing.T) {
 	var (
 		b       Bucket
