@@ -58,6 +58,7 @@ func TestBucket_RuntimeError(t *testing.T) {
 		}
 
 		r := root.GetSelection(ss, defaultPivot)
+		g.Expect(r).NotTo(BeNil())
 		g.Expect(r.nodes).To(HaveLen(3))
 	})
 }
