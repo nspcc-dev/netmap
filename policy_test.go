@@ -27,19 +27,39 @@ func newRoot(bs ...bucket) (b Bucket, err error) {
 }
 
 func TestBucket_RuntimeError(t *testing.T) {
-	g := NewGomegaWithT(t)
-	buckets := []bucket{
-		{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
-	}
-	root, err := newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	t.Run("slice bounds out of range", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+		buckets := []bucket{
+			{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
+		}
+		root, err := newRoot(buckets...)
+		g.Expect(err).NotTo(HaveOccurred())
 
-	ss := []Select{
-		{Key: NodesBucket, Count: 3}, // available only two
-	}
+		ss := []Select{
+			{Key: NodesBucket, Count: 3}, // available only two
+		}
 
-	r := root.GetSelection(ss, defaultPivot)
-	g.Expect(r).To(BeNil())
+		r := root.GetSelection(ss, defaultPivot)
+		g.Expect(r).To(BeNil())
+	})
+
+	t.Run("regression test", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+		buckets := []bucket{
+			{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
+			{"/Location:Europe/Country:Spain/City:Barcelona", []uint32{16, 19}},
+		}
+		root, err := newRoot(buckets...)
+		g.Expect(err).NotTo(HaveOccurred())
+
+		ss := []Select{
+			{Key: "Location", Count: 1},
+			{Key: NodesBucket, Count: 3},
+		}
+
+		r := root.GetSelection(ss, defaultPivot)
+		g.Expect(r.nodes).To(HaveLen(3))
+	})
 }
 
 func TestBucket_IsValid(t *testing.T) {
