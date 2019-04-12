@@ -281,12 +281,12 @@ func (b Bucket) GetSelection(ss []Select, pivot []byte) *Bucket {
 			return nil
 		}
 
-		root.nodes = make(Uint32Slice, len(b.nodes))
-		copy(root.nodes, b.nodes)
+		nodes := make([]uint32, len(b.nodes))
+		copy(nodes, b.nodes)
 		if len(pivot) != 0 {
-			hrw.SortSliceByValue(root.nodes, pivotHash)
+			hrw.SortSliceByValue(nodes, pivotHash)
 		}
-		root.nodes = root.nodes[:count]
+		root.nodes = nodes[:count]
 		return &root
 	}
 
