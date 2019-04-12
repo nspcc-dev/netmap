@@ -43,6 +43,34 @@ func TestBucket_RuntimeError(t *testing.T) {
 		g.Expect(r).To(BeNil())
 	})
 
+	t.Run("test hrw distribution", func(t *testing.T) {
+		g := NewGomegaWithT(t)
+		buckets := []bucket{
+			{"/Location:America/Country:USA/City:NewYork", []uint32{0, 1, 2, 3, 4, 5}},
+		}
+
+		ss := []Select{
+			{Key: "Location", Count: 1},
+			{Key: NodesBucket, Count: 3},
+		}
+
+		root, err := newRoot(buckets...)
+		g.Expect(err).NotTo(HaveOccurred())
+
+		r1 := root.GetSelection(ss, []byte{1, 2, 3})
+		g.Expect(r1).NotTo(BeNil())
+
+		r2 := root.GetSelection(ss, []byte{1, 2, 4})
+		g.Expect(r2).NotTo(BeNil())
+
+		r3 := root.GetSelection(ss, []byte{1, 2, 5})
+		g.Expect(r3).NotTo(BeNil())
+
+		g.Expect(r1.nodes).NotTo(BeEquivalentTo(r2.nodes))
+		g.Expect(r1.nodes).NotTo(BeEquivalentTo(r3.nodes))
+		g.Expect(r2.nodes).NotTo(BeEquivalentTo(r3.nodes))
+	})
+
 	t.Run("regression test", func(t *testing.T) {
 		g := NewGomegaWithT(t)
 		buckets := []bucket{
