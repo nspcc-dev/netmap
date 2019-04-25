@@ -5,6 +5,8 @@ R=\033[0m
 NAME ?= nmrepl
 DIR = ${CURDIR}
 
+LIBS:=grpc
+
 .PHONY: help attach auto up down
 # Show this help prompt
 help:
@@ -29,4 +31,9 @@ up: down
 
 # Regenerate proto files:
 protoc:
-	@find . -type f -name '*.proto' -not -path './vendor/*' -exec protoc --proto_path=$(GOPATH)/src:. --gofast_out=. '{}' \;
+# ^ protoc: LIBS:=$(LIBS),Mpath/to/another/lib
+	@find . -type f -name '*.proto' -not -path './vendor/*' \
+		-exec protoc \
+		--proto_path=$(GOPATH)/src:. \
+		--gofast_out=plugins=$(LIBS):. '{}' \;
+
