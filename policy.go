@@ -46,6 +46,9 @@ type (
 	FilterFunc func(Nodes) Nodes
 )
 
+// Hash is a function from hrw.Hasher interface. It is implemented
+// to support weighted hrw therefore sort function sorts nodes
+// based on their `n` value.
 func (n Node) Hash() uint64 {
 	return uint64(n.n)
 }
@@ -70,36 +73,36 @@ func (n *Node) Read(r io.Reader) error {
 	return nil
 }
 
-func (p Nodes) Len() int           { return len(p) }
-func (p Nodes) Less(i, j int) bool { return p[i].n < p[j].n }
-func (p Nodes) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
-func (p Nodes) N() []uint32 {
-	n := make([]uint32, 0, len(p))
-	for i := range p {
-		n = append(n, p[i].n)
+func (n Nodes) Len() int           { return len(n) }
+func (n Nodes) Less(i, j int) bool { return n[i].n < n[j].n }
+func (n Nodes) Swap(i, j int)      { n[i], n[j] = n[j], n[i] }
+func (n Nodes) N() []uint32 {
+	ns := make([]uint32, 0, len(n))
+	for i := range n {
+		ns = append(ns, n[i].n)
 	}
-	return n
+	return ns
 }
-func (p Nodes) W() []uint64 {
-	w := make([]uint64, 0, len(p))
-	for i := range p {
-		w = append(w, p[i].w)
+func (n Nodes) W() []uint64 {
+	w := make([]uint64, 0, len(n))
+	for i := range n {
+		w = append(w, n[i].w)
 	}
 	return w
 }
-func (p Nodes) Write(w io.Writer) error {
+func (n Nodes) Write(w io.Writer) error {
 	var err error
-	if err = binary.Write(w, binary.BigEndian, int32(len(p))); err != nil {
+	if err = binary.Write(w, binary.BigEndian, int32(len(n))); err != nil {
 		return err
 	}
-	for i := range p {
-		if err = p[i].Write(w); err != nil {
+	for i := range n {
+		if err = n[i].Write(w); err != nil {
 			return err
 		}
 	}
 	return nil
 }
-func (p *Nodes) Read(r io.Reader) error {
+func (n *Nodes) Read(r io.Reader) error {
 	var (
 		err error
 		ln  int32
@@ -114,7 +117,7 @@ func (p *Nodes) Read(r io.Reader) error {
 				return err
 			}
 		}
-		*p = nodes
+		*n = nodes
 	}
 	return nil
 }
@@ -622,12 +625,12 @@ func splitKV(s string) (string, string, error) {
 }
 
 // GetNodesByOption returns list of nodes possessing specified options.
-func (b Bucket) GetNodesByOption(opts ...string) []uint32 {
+func (b Bucket) GetNodesByOption(opts ...string) Nodes {
 	var nodes Nodes
 	for _, opt := range opts {
 		nodes = intersect(nodes, getNodes(b, splitProps(opt[1:])))
 	}
-	return nodes.N()
+	return nodes
 }
 
 func (b *Bucket) addNodes(bs []Bucket, n Nodes) error {

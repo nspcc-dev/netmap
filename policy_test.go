@@ -510,7 +510,7 @@ func TestNetMap_GetNodesByOption(t *testing.T) {
 	}
 
 	n1 := root.GetNodesByOption("/Location:Europe/Country:Germany")
-	g.Expect(n1).To(Equal([]uint32{2, 4}))
+	g.Expect(n1.N()).To(Equal([]uint32{2, 4}))
 
 	n2 := root.GetNodesByOption("/Location:Europe/Country:Russia")
 	g.Expect(n2).To(HaveLen(0))
@@ -561,7 +561,7 @@ func TestBucket_AddBucket(t *testing.T) {
 func TestBucket_AddNode(t *testing.T) {
 	var (
 		nroot Bucket
-		ns    []uint32
+		ns    Nodes
 		err   error
 	)
 
@@ -574,10 +574,10 @@ func TestBucket_AddNode(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 
 	ns = nroot.GetNodesByOption("/Location:Europe/Country:Germany")
-	g.Expect(ns).To(Equal([]uint32{7}))
+	g.Expect(ns.N()).To(Equal([]uint32{7}))
 
 	ns = nroot.GetNodesByOption("/Location:Europe")
-	g.Expect(ns).To(Equal([]uint32{1, 3, 7}))
+	g.Expect(ns.N()).To(Equal([]uint32{1, 3, 7}))
 }
 
 func TestNetMap_AddNode(t *testing.T) {
@@ -602,10 +602,10 @@ func TestNetMap_AddNode(t *testing.T) {
 	g.Expect(err).NotTo(HaveOccurred())
 
 	ns := root.GetNodesByOption("/Location:Europe/Country:Germany")
-	g.Expect(ns).To(Equal([]uint32{3}))
+	g.Expect(ns.N()).To(Equal([]uint32{3}))
 
 	ns = root.GetNodesByOption("/Location:Europe")
-	g.Expect(ns).To(Equal([]uint32{1, 2, 3}))
+	g.Expect(ns.N()).To(Equal([]uint32{1, 2, 3}))
 }
 
 func TestBucket_MarshalBinary(t *testing.T) {
@@ -669,7 +669,7 @@ func TestBucket_Nodelist(t *testing.T) {
 
 func TestNetMap_FindGraph(t *testing.T) {
 	var (
-		nodesByLoc map[string][]uint32
+		nodesByLoc map[string]Nodes
 		root, exp  Bucket
 		c          *Bucket
 		ss         []Select
@@ -705,7 +705,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 		g.Expect([]uint32{1, 2, 3, 6, 7, 8}).To(ContainElement(r.n))
 	}
 
-	nodesByLoc = map[string][]uint32{
+	nodesByLoc = map[string]Nodes{
 		"Asia":         root.GetNodesByOption("/Location:Asia"),
 		"Europe":       root.GetNodesByOption("/Location:Europe"),
 		"NorthAmerica": root.GetNodesByOption("/Location:NorthAmerica"),
@@ -784,7 +784,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 	c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(c).To(Equal(&exp))
 	for _, n := range c.Nodelist() {
-		g.Expect(nodesByLoc["NorthAmerica"]).To(ContainElement(n.n))
+		g.Expect(nodesByLoc["NorthAmerica"]).To(ContainElement(n))
 	}
 
 	// check with 2 successive filters
@@ -816,7 +816,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 	c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(c).NotTo(BeNil())
 	for _, n := range c.Nodelist() {
-		g.Expect(nodesByLoc["Europe"]).To(ContainElement(n.n))
+		g.Expect(nodesByLoc["Europe"]).To(ContainElement(n))
 	}
 
 	buckets = []bucket{
@@ -848,7 +848,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 func TestBucket_FindNodes(t *testing.T) {
 	var (
 		ns         Nodes
-		nodesByLoc map[string][]uint32
+		nodesByLoc map[string]Nodes
 		root       Bucket
 		ss         []Select
 		fs         []Filter
@@ -875,7 +875,7 @@ func TestBucket_FindNodes(t *testing.T) {
 	root, err = newRoot(buckets...)
 	g.Expect(err).NotTo(HaveOccurred())
 
-	nodesByLoc = map[string][]uint32{
+	nodesByLoc = map[string]Nodes{
 		"Asia":         root.GetNodesByOption("/Location:Asia"),
 		"Europe":       root.GetNodesByOption("/Location:Europe"),
 		"NorthAmerica": root.GetNodesByOption("/Location:NorthAmerica"),
@@ -909,7 +909,7 @@ func TestBucket_FindNodes(t *testing.T) {
 		ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
 		g.Expect(ns).NotTo(HaveLen(0))
 		for _, n := range ns {
-			g.Expect(nodesByLoc[c]).To(ContainElement(n.n))
+			g.Expect(nodesByLoc[c]).To(ContainElement(n))
 		}
 	}
 
@@ -938,7 +938,7 @@ func TestBucket_FindNodes(t *testing.T) {
 	ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(ns).NotTo(HaveLen(0))
 	for _, n := range ns {
-		g.Expect(nodesByLoc["NorthAmerica"]).To(ContainElement(n.n))
+		g.Expect(nodesByLoc["NorthAmerica"]).To(ContainElement(n))
 	}
 
 	// check with 2 successive filters
@@ -970,7 +970,7 @@ func TestBucket_FindNodes(t *testing.T) {
 	ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(ns).To(HaveLen(6))
 	for _, n := range ns {
-		g.Expect(nodesByLoc["Europe"]).To(ContainElement(n.n))
+		g.Expect(nodesByLoc["Europe"]).To(ContainElement(n))
 	}
 
 	// consistency test
