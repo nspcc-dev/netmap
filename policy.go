@@ -597,12 +597,12 @@ func (b Bucket) Children() []Bucket {
 	return b.children
 }
 
-// AddNode adds node N with options opts to b.
+// AddNode adds node n with options opts to b.
 func (b *Bucket) AddNode(n uint32, opts ...string) error {
 	return b.addNode(Node{n, 0}, opts...)
 }
 
-// AddStrawNode adds node N with options opts to b.
+// AddStrawNode adds straw node n with options opts to b.
 func (b *Bucket) AddStrawNode(n Node, opts ...string) error {
 	return b.addNode(n, opts...)
 }
@@ -648,7 +648,7 @@ func (b *Bucket) addNodes(bs []Bucket, n Nodes) error {
 	return nil
 }
 
-// AddBucket add bucket corresponding to option o with nodes N as subbucket to b.
+// AddBucket add bucket corresponding to option o with nodes n as subbucket to b.
 func (b *Bucket) AddBucket(o string, n Nodes) error {
 	if o != Separator && (!strings.HasPrefix(o, Separator) || strings.HasSuffix(o, Separator)) {
 		return errors.Errorf("must start and not end with '%s'", Separator)

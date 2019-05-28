@@ -1035,7 +1035,6 @@ func TestBucket_MarshalBinaryStress(t *testing.T) {
 }
 
 func Benchmark_MarshalStress(b *testing.B) {
-	b.Skip()
 	var (
 		before, after Bucket
 		s             string
