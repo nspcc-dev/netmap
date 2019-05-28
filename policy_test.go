@@ -312,7 +312,7 @@ func TestBucket_GetWeightSelection(t *testing.T) {
 
 	g := NewGomegaWithT(t)
 	buckets = []strawBucket{
-		{"/Location:Asia/Country:Korea", Nodes{{1, 1}, {1, 3}}},
+		{"/Location:Asia/Country:Korea", Nodes{{1, 1}, {3, 3}}},
 		{"/Location:Asia/Country:China", Nodes{{2, 1}}},
 		{"/Location:Europe/Country:Germany/City:Hamburg", Nodes{{25, 8}}},
 		{"/Location:Europe/Country:Germany/City:Bremen", Nodes{{27, 1}, {29, 2}}},
@@ -324,7 +324,7 @@ func TestBucket_GetWeightSelection(t *testing.T) {
 	root, err = newStrawRoot(buckets...)
 	g.Expect(err).NotTo(HaveOccurred())
 
-	nodes = Nodes{{25, 8}, {30, 10}, {20, 9}, {1, 3}}
+	nodes = Nodes{{25, 8}, {30, 10}, {20, 9}, {3, 3}}
 
 	ss = []Select{
 		{Key: NodesBucket, Count: 4},
