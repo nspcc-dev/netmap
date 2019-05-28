@@ -19,7 +19,11 @@ var defaultPivot = []byte("This is default random data")
 
 func newRoot(bs ...bucket) (b Bucket, err error) {
 	for i := range bs {
-		if err = b.AddBucket(bs[i].name, bs[i].nodes); err != nil {
+		n := make(Nodes, 0, len(bs[i].nodes))
+		for j := range bs[i].nodes {
+			n = append(n, Node{bs[i].nodes[j], 0})
+		}
+		if err = b.AddBucket(bs[i].name, n); err != nil {
 			return
 		}
 	}
@@ -119,12 +123,12 @@ func TestBucket_IsValid(t *testing.T) {
 	b = Bucket{
 		Key:   "Location",
 		Value: "Europe",
-		nodes: []uint32{1, 2},
+		nodes: Nodes{{1, 0}, {2, 0}},
 		children: []Bucket{
 			{
 				Key:   "Country",
 				Value: "Germany",
-				nodes: []uint32{1, 2, 3},
+				nodes: Nodes{{1, 0}, {2, 0}, {3, 0}},
 			},
 		},
 	}
@@ -134,12 +138,12 @@ func TestBucket_IsValid(t *testing.T) {
 	b = Bucket{
 		Key:   "Location",
 		Value: "Europe",
-		nodes: []uint32{1, 2, 3},
+		nodes: Nodes{{1, 0}, {2, 0}, {3, 0}},
 		children: []Bucket{
 			{
 				Key:   "Country",
 				Value: "Germany",
-				nodes: []uint32{2},
+				nodes: Nodes{{2, 0}},
 			},
 		},
 	}
@@ -252,7 +256,7 @@ func TestBucket_GetSelection(t *testing.T) {
 
 	buckets = []bucket{
 		{"/Location:Europe/Country:Germany/City:Hamburg", []uint32{25}},
-		{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
+		{"/Location:Europe/Country:Spain/City:Barcelona", []uint32{26, 30}},
 	}
 
 	exp, err = newRoot(buckets...)
@@ -267,7 +271,7 @@ func TestBucket_GetSelection(t *testing.T) {
 	g.Expect(r.nodes).To(Equal(exp.nodes))
 
 	buckets = []bucket{
-		{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
+		{"/Location:Europe/Country:Spain/City:Barcelona", []uint32{26, 30}},
 		{"/Location:NorthAmerica/Country:USA/City:NewYork", []uint32{19, 20}},
 	}
 	exp, err = newRoot(buckets...)
@@ -399,21 +403,21 @@ func TestNetMap_GetNodesByOption(t *testing.T) {
 	fr = Bucket{
 		Key:   "Country",
 		Value: "France",
-		nodes: []uint32{0, 1, 3},
+		nodes: Nodes{{0, 0}, {1, 0}, {3, 0}},
 	}
 	ge = Bucket{
 		Key:   "Country",
 		Value: "Germany",
-		nodes: []uint32{2, 4},
+		nodes: Nodes{{2, 0}, {4, 0}},
 	}
 	eu = Bucket{
 		Key:      "Location",
 		Value:    "Europe",
-		nodes:    []uint32{0, 1, 2, 3, 4},
+		nodes:    Nodes{{0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}},
 		children: []Bucket{fr, ge},
 	}
 	root = Bucket{
-		nodes:    []uint32{0, 1, 2, 3, 4, 5, 6},
+		nodes:    Nodes{{0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}},
 		children: []Bucket{eu},
 	}
 
@@ -540,7 +544,7 @@ func TestBucket_MarshalBinary(t *testing.T) {
 
 func TestBucket_Nodelist(t *testing.T) {
 	var (
-		nodes   []uint32
+		nodes   Nodes
 		root    Bucket
 		buckets []bucket
 		err     error
@@ -571,13 +575,12 @@ func TestBucket_Nodelist(t *testing.T) {
 	nodes = root.Nodelist()
 	g.Expect(nodes).To(HaveLen(24))
 	for i := uint32(1); i <= 24; i++ {
-		g.Expect(nodes).To(ContainElement(i))
+		g.Expect(nodes.N()).To(ContainElement(i))
 	}
 }
 
 func TestNetMap_FindGraph(t *testing.T) {
 	var (
-		ns         []uint32
 		nodesByLoc map[string][]uint32
 		root, exp  Bucket
 		c          *Bucket
@@ -611,7 +614,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 	g.Expect(c).NotTo(BeNil())
 	g.Expect(c.Nodelist()).To(HaveLen(6))
 	for _, r := range c.Nodelist() {
-		g.Expect([]uint32{1, 2, 3, 6, 7, 8}).To(ContainElement(r))
+		g.Expect([]uint32{1, 2, 3, 6, 7, 8}).To(ContainElement(r.n))
 	}
 
 	nodesByLoc = map[string][]uint32{
@@ -634,7 +637,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 		c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
 		g.Expect(c).NotTo(BeNil())
 		for _, n := range c.Nodelist() {
-			g.Expect(nodesByLoc[loc]).NotTo(ContainElement(n))
+			g.Expect(nodesByLoc[loc]).NotTo(ContainElement(n.n))
 		}
 	}
 
@@ -692,8 +695,8 @@ func TestNetMap_FindGraph(t *testing.T) {
 	}
 	c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(c).To(Equal(&exp))
-	for _, n := range ns {
-		g.Expect(nodesByLoc["NorthAmerica"]).To(ContainElement(n))
+	for _, n := range c.Nodelist() {
+		g.Expect(nodesByLoc["NorthAmerica"]).To(ContainElement(n.n))
 	}
 
 	// check with 2 successive filters
@@ -725,7 +728,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 	c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(c).NotTo(BeNil())
 	for _, n := range c.Nodelist() {
-		g.Expect(nodesByLoc["Europe"]).To(ContainElement(n))
+		g.Expect(nodesByLoc["Europe"]).To(ContainElement(n.n))
 	}
 
 	buckets = []bucket{
@@ -756,7 +759,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 
 func TestBucket_FindNodes(t *testing.T) {
 	var (
-		ns         []uint32
+		ns         Nodes
 		nodesByLoc map[string][]uint32
 		root       Bucket
 		ss         []Select
@@ -818,7 +821,7 @@ func TestBucket_FindNodes(t *testing.T) {
 		ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
 		g.Expect(ns).NotTo(HaveLen(0))
 		for _, n := range ns {
-			g.Expect(nodesByLoc[c]).To(ContainElement(n))
+			g.Expect(nodesByLoc[c]).To(ContainElement(n.n))
 		}
 	}
 
@@ -847,7 +850,7 @@ func TestBucket_FindNodes(t *testing.T) {
 	ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(ns).NotTo(HaveLen(0))
 	for _, n := range ns {
-		g.Expect(nodesByLoc["NorthAmerica"]).To(ContainElement(n))
+		g.Expect(nodesByLoc["NorthAmerica"]).To(ContainElement(n.n))
 	}
 
 	// check with 2 successive filters
@@ -879,7 +882,7 @@ func TestBucket_FindNodes(t *testing.T) {
 	ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
 	g.Expect(ns).To(HaveLen(6))
 	for _, n := range ns {
-		g.Expect(nodesByLoc["Europe"]).To(ContainElement(n))
+		g.Expect(nodesByLoc["Europe"]).To(ContainElement(n.n))
 	}
 
 	// consistency test
@@ -931,7 +934,7 @@ func TestBucket_MarshalBinaryStress(t *testing.T) {
 	before, _ = newRoot()
 	for i := uint32(1); i < 1000; i++ {
 		s += fmt.Sprintf("/k%d:v%d", i, i)
-		err := before.AddBucket(s, []uint32{i})
+		err := before.AddBucket(s, Nodes{{i, 0}})
 		g.Expect(err).NotTo(HaveOccurred())
 	}
 
@@ -944,6 +947,7 @@ func TestBucket_MarshalBinaryStress(t *testing.T) {
 }
 
 func Benchmark_MarshalStress(b *testing.B) {
+	b.Skip()
 	var (
 		before, after Bucket
 		s             string
@@ -954,7 +958,7 @@ func Benchmark_MarshalStress(b *testing.B) {
 	before, _ = newRoot()
 	for i := uint32(1); i < 1000; i++ {
 		s += fmt.Sprintf("/k%d:v%d", i, i)
-		err := before.AddBucket(s, []uint32{i})
+		err := before.AddBucket(s, Nodes{{i, 0}})
 		g.Expect(err).NotTo(HaveOccurred())
 	}
 
@@ -966,7 +970,6 @@ func Benchmark_MarshalStress(b *testing.B) {
 		err := after.UnmarshalBinary(data)
 		if err != nil {
 			b.Fatal(err)
-			b.FailNow()
 		}
 	}
 }
@@ -993,14 +996,14 @@ func TestBucket_BigMap(t *testing.T) {
 	templateStorage := "/Storage:"
 
 	maxtotal := locLim * countryLim * cityLim * dcLim * nLim
-	storagessd := make([]uint32, 0, maxtotal)
-	storagemem := make([]uint32, 0, maxtotal)
-	storagetape := make([]uint32, 0, maxtotal)
-	trust9 := make([]uint32, 0, maxtotal)
-	trust8 := make([]uint32, 0, maxtotal)
-	trust7 := make([]uint32, 0, maxtotal)
-	trust6 := make([]uint32, 0, maxtotal)
-	trust5 := make([]uint32, 0, maxtotal)
+	storagessd := make(Nodes, 0, maxtotal)
+	storagemem := make(Nodes, 0, maxtotal)
+	storagetape := make(Nodes, 0, maxtotal)
+	trust9 := make(Nodes, 0, maxtotal)
+	trust8 := make(Nodes, 0, maxtotal)
+	trust7 := make(Nodes, 0, maxtotal)
+	trust6 := make(Nodes, 0, maxtotal)
+	trust5 := make(Nodes, 0, maxtotal)
 
 	start := time.Now()
 	for loc = 0; loc < locLim; loc++ {
@@ -1014,30 +1017,30 @@ func TestBucket_BigMap(t *testing.T) {
 				cityB, _ := newRoot()
 				for dc = 0; dc < dcLim; dc++ {
 					dcStr := ciStr + "dc" + strconv.Itoa(dc)
-					ns := make([]uint32, 0, nLim)
+					ns := make(Nodes, 0, nLim)
 					for n = 0; n < nLim; n++ {
-						ns = append(ns, total)
+						ns = append(ns, Node{total, 0})
 						total++
 						switch total % 3 {
 						case 0:
-							storagessd = append(storagessd, total)
+							storagessd = append(storagessd, Node{total, 0})
 						case 1:
-							storagemem = append(storagemem, total)
+							storagemem = append(storagemem, Node{total, 0})
 						case 2:
-							storagetape = append(storagetape, total)
+							storagetape = append(storagetape, Node{total, 0})
 						}
 
 						switch total % 5 {
 						case 0:
-							trust9 = append(trust9, total)
+							trust9 = append(trust9, Node{total, 0})
 						case 1:
-							trust8 = append(trust8, total)
+							trust8 = append(trust8, Node{total, 0})
 						case 2:
-							trust7 = append(trust7, total)
+							trust7 = append(trust7, Node{total, 0})
 						case 3:
-							trust6 = append(trust6, total)
+							trust6 = append(trust6, Node{total, 0})
 						case 4:
-							trust5 = append(trust5, total)
+							trust5 = append(trust5, Node{total, 0})
 						}
 					}
 					err = cityB.AddBucket("/DC:"+dcStr, ns)
@@ -1109,7 +1112,7 @@ func TestBucket_BigMap(t *testing.T) {
 	fmt.Println("Traverse time:\t\t", time.Since(start))
 	g.Expect(len(nodes)).To(Equal(20))
 
-	var testcont []uint32
+	var testcont Nodes
 	for _, b := range root.children {
 		if b.Key == "Storage" && b.Value == "SSD" {
 			testcont = b.nodes

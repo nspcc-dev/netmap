@@ -31,20 +31,93 @@ type (
 	Bucket struct {
 		Key      string
 		Value    string
-		nodes    Uint32Slice
+		nodes    Nodes
 		children []Bucket
 	}
 
-	// Uint32Slice is generic type for more convenient sorting.
-	Uint32Slice []uint32
+	Node struct {
+		n uint32
+		w uint64
+	}
+
+	Nodes []Node
 
 	// FilterFunc is generic type for filtering function on nodes.
-	FilterFunc func([]uint32) []uint32
+	FilterFunc func(Nodes) Nodes
 )
 
-func (p Uint32Slice) Len() int           { return len(p) }
-func (p Uint32Slice) Less(i, j int) bool { return p[i] < p[j] }
-func (p Uint32Slice) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+func (n Node) Hash() uint64 {
+	return uint64(n.n)
+}
+func (n Node) Write(w io.Writer) error {
+	var err error
+	if err = binary.Write(w, binary.BigEndian, n.n); err != nil {
+		return err
+	}
+	if err = binary.Write(w, binary.BigEndian, n.w); err != nil {
+		return err
+	}
+	return nil
+}
+func (n *Node) Read(r io.Reader) error {
+	var err error
+	if err = binary.Read(r, binary.BigEndian, &n.n); err != nil {
+		return err
+	}
+	if err = binary.Read(r, binary.BigEndian, &n.w); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p Nodes) Len() int           { return len(p) }
+func (p Nodes) Less(i, j int) bool { return p[i].n < p[j].n }
+func (p Nodes) Swap(i, j int)      { p[i], p[j] = p[j], p[i] }
+func (p Nodes) N() []uint32 {
+	n := make([]uint32, 0, len(p))
+	for i := range p {
+		n = append(n, p[i].n)
+	}
+	return n
+}
+func (p Nodes) W() []uint64 {
+	w := make([]uint64, 0, len(p))
+	for i := range p {
+		w = append(w, p[i].w)
+	}
+	return w
+}
+func (p Nodes) Write(w io.Writer) error {
+	var err error
+	if err = binary.Write(w, binary.BigEndian, int32(len(p))); err != nil {
+		return err
+	}
+	for i := range p {
+		if err = p[i].Write(w); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (p *Nodes) Read(r io.Reader) error {
+	var (
+		err error
+		ln  int32
+	)
+	if err = binary.Read(r, binary.BigEndian, &ln); err != nil {
+		return err
+	}
+	if ln > 0 {
+		nodes := make(Nodes, ln)
+		for i := range nodes {
+			if err = nodes[i].Read(r); err != nil {
+				return err
+			}
+		}
+		*p = nodes
+	}
+	return nil
+}
 
 // Hash uses murmur3 hash to return uint64
 func (b Bucket) Hash() uint64 {
@@ -73,14 +146,14 @@ func (b *Bucket) findGraph(pivot []byte, s SFGroup) (c *Bucket) {
 }
 
 // FindNodes returns list of nodes, corresponding to specified placement rule.
-func (b *Bucket) FindNodes(pivot []byte, ss ...SFGroup) (nodes []uint32) {
+func (b *Bucket) FindNodes(pivot []byte, ss ...SFGroup) (nodes Nodes) {
 	for _, s := range ss {
 		nodes = merge(nodes, b.findNodes(pivot, s))
 	}
 	return
 }
 
-func (b *Bucket) findNodes(pivot []byte, s SFGroup) []uint32 {
+func (b *Bucket) findNodes(pivot []byte, s SFGroup) Nodes {
 	var c *Bucket
 
 	if c = b.GetMaxSelection(s); c != nil {
@@ -98,7 +171,7 @@ func (b Bucket) Copy() Bucket {
 		Value: b.Value,
 	}
 	if b.nodes != nil {
-		bc.nodes = make(Uint32Slice, len(b.nodes))
+		bc.nodes = make(Nodes, len(b.nodes))
 		copy(bc.nodes, b.nodes)
 	}
 	if b.children != nil {
@@ -116,8 +189,8 @@ func (b Bucket) Copy() Bucket {
 // - there must be no nodes belonging to 2 buckets
 func (b Bucket) IsValid() bool {
 	var (
-		ns    Uint32Slice
-		nodes = make(Uint32Slice, 0, len(b.nodes))
+		ns    Nodes
+		nodes = make(Nodes, 0, len(b.nodes))
 	)
 
 	if len(b.children) == 0 {
@@ -136,7 +209,7 @@ func (b Bucket) IsValid() bool {
 	return len(nodes) == len(ns)
 }
 
-func (b Bucket) findForbidden(fs []Filter) (forbidden []uint32) {
+func (b Bucket) findForbidden(fs []Filter) (forbidden Nodes) {
 	// if root does not satisfy any filter it must be forbidden
 	for _, f := range fs {
 		if b.Key == f.Key && !f.Check(b) {
@@ -243,13 +316,13 @@ func (b Bucket) GetMaxSelection(s SFGroup) (r *Bucket) {
 	)
 
 	for _, c := range forbidden {
-		excludes[c] = struct{}{}
+		excludes[c.n] = struct{}{}
 	}
 	for _, c := range s.Exclude {
 		excludes[c] = struct{}{}
 	}
 
-	r, _ = b.getMaxSelection(s.Selectors, func(nodes []uint32) []uint32 {
+	r, _ = b.getMaxSelection(s.Selectors, func(nodes Nodes) Nodes {
 		return diff(nodes, excludes)
 	})
 	return
@@ -281,10 +354,10 @@ func (b Bucket) GetSelection(ss []Select, pivot []byte) *Bucket {
 			return nil
 		}
 
-		nodes := make([]uint32, len(b.nodes))
+		nodes := make(Nodes, len(b.nodes))
 		copy(nodes, b.nodes)
 		if len(pivot) != 0 {
-			hrw.SortSliceByValue(nodes, pivotHash)
+			hrw.SortSliceByWeightValue(nodes, nodes.W(), pivotHash)
 		}
 		root.nodes = nodes[:count]
 		return &root
@@ -369,17 +442,17 @@ loop:
 
 // UpdateIndices is auxiliary function used to update
 // indices of all nodes according to tr.
-func (b *Bucket) UpdateIndices(tr map[uint32]uint32) Bucket {
+func (b *Bucket) UpdateIndices(tr map[uint32]Node) Bucket {
 	var (
 		children = make([]Bucket, 0, len(b.children))
-		nodes    = make(Uint32Slice, 0, len(b.nodes))
+		nodes    = make(Nodes, 0, len(b.nodes))
 	)
 
 	for i := range b.children {
 		children = append(children, b.children[i].UpdateIndices(tr))
 	}
 	for i := range b.nodes {
-		nodes = append(nodes, tr[b.nodes[i]])
+		nodes = append(nodes, tr[b.nodes[i].n])
 	}
 	sort.Sort(nodes)
 
@@ -417,10 +490,7 @@ func (b Bucket) Write(w io.Writer) error {
 	}
 
 	// writing nodes
-	if err = binary.Write(w, binary.BigEndian, int32(len(b.nodes))); err != nil {
-		return err
-	}
-	if err = binary.Write(w, binary.BigEndian, b.nodes); err != nil {
+	if err = b.nodes.Write(w); err != nil {
 		return err
 	}
 
@@ -456,14 +526,8 @@ func (b *Bucket) Read(r io.Reader) error {
 	b.Key, b.Value, _ = splitKV(string(name))
 
 	// reading node list
-	if err = binary.Read(r, binary.BigEndian, &ln); err != nil {
+	if err = b.nodes.Read(r); err != nil {
 		return err
-	}
-	if ln > 0 {
-		b.nodes = make([]uint32, ln)
-		if err = binary.Read(r, binary.BigEndian, &b.nodes); err != nil {
-			return err
-		}
 	}
 
 	if err = binary.Read(r, binary.BigEndian, &ln); err != nil {
@@ -514,7 +578,7 @@ func (b *Bucket) fillNodes() {
 }
 
 // Nodelist returns slice of nodes belonging to b.
-func (b Bucket) Nodelist() (r []uint32) {
+func (b Bucket) Nodelist() (r Nodes) {
 	if b.nodes != nil || len(b.children) == 0 {
 		return b.nodes
 	}
@@ -532,8 +596,17 @@ func (b Bucket) Children() []Bucket {
 
 // AddNode adds node n with options opts to b.
 func (b *Bucket) AddNode(n uint32, opts ...string) error {
+	return b.addNode(Node{n, 0}, opts...)
+}
+
+// AddStrawNode adds node n with options opts to b.
+func (b *Bucket) AddStrawNode(n Node, opts ...string) error {
+	return b.addNode(n, opts...)
+}
+
+func (b *Bucket) addNode(n Node, opts ...string) error {
 	for _, o := range opts {
-		if err := b.AddBucket(o, []uint32{n}); err != nil {
+		if err := b.AddBucket(o, Nodes{n}); err != nil {
 			return err
 		}
 	}
@@ -550,14 +623,14 @@ func splitKV(s string) (string, string, error) {
 
 // GetNodesByOption returns list of nodes possessing specified options.
 func (b Bucket) GetNodesByOption(opts ...string) []uint32 {
-	var nodes []uint32
+	var nodes Nodes
 	for _, opt := range opts {
 		nodes = intersect(nodes, getNodes(b, splitProps(opt[1:])))
 	}
-	return nodes
+	return nodes.N()
 }
 
-func (b *Bucket) addNodes(bs []Bucket, n []uint32) error {
+func (b *Bucket) addNodes(bs []Bucket, n Nodes) error {
 	b.nodes = merge(b.nodes, n)
 	if len(bs) == 0 {
 		return nil
@@ -573,11 +646,13 @@ func (b *Bucket) addNodes(bs []Bucket, n []uint32) error {
 }
 
 // AddBucket add bucket corresponding to option o with nodes n as subbucket to b.
-func (b *Bucket) AddBucket(o string, n []uint32) error {
+func (b *Bucket) AddBucket(o string, n Nodes) error {
 	if o != Separator && (!strings.HasPrefix(o, Separator) || strings.HasSuffix(o, Separator)) {
 		return errors.Errorf("must start and not end with '%s'", Separator)
 	}
-
+	if len(n) == 0 {
+		n = nil
+	}
 	return b.addNodes(splitProps(o[1:]), n)
 }
 
@@ -597,13 +672,13 @@ func splitProps(o string) []Bucket {
 	return props
 }
 
-func merge(a, b []uint32) []uint32 {
+func merge(a, b Nodes) Nodes {
 	if a == nil {
 		return b
 	}
 
 	la, lb := len(a), len(b)
-	c := make([]uint32, 0, la+lb)
+	c := make(Nodes, 0, la+lb)
 loop:
 	for i, j := 0, 0; i < la || j < lb; {
 		switch true {
@@ -613,10 +688,10 @@ loop:
 		case j == lb:
 			c = append(c, a[i:]...)
 			break loop
-		case a[i] < b[j]:
+		case a[i].n < b[j].n:
 			c = append(c, a[i])
 			i++
-		case a[i] > b[j]:
+		case a[i].n > b[j].n:
 			c = append(c, b[j])
 			j++
 		default:
@@ -629,7 +704,7 @@ loop:
 	return c
 }
 
-func makeTreeProps(bs []Bucket, n []uint32) Bucket {
+func makeTreeProps(bs []Bucket, n Nodes) Bucket {
 	bs[0].nodes = n
 	for i := len(bs) - 1; i > 0; i-- {
 		bs[i].nodes = n
