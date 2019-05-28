@@ -15,6 +15,11 @@ type bucket struct {
 	nodes []uint32
 }
 
+type strawBucket struct {
+	name  string
+	nodes Nodes
+}
+
 var defaultPivot = []byte("This is default random data")
 
 func newRoot(bs ...bucket) (b Bucket, err error) {
@@ -24,6 +29,15 @@ func newRoot(bs ...bucket) (b Bucket, err error) {
 			n = append(n, Node{bs[i].nodes[j], 0})
 		}
 		if err = b.AddBucket(bs[i].name, n); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func newStrawRoot(bs ...strawBucket) (b Bucket, err error) {
+	for i := range bs {
+		if err = b.AddBucket(bs[i].name, bs[i].nodes); err != nil {
 			return
 		}
 	}
@@ -286,12 +300,58 @@ func TestBucket_GetSelection(t *testing.T) {
 	g.Expect(r.nodes).To(Equal(exp.nodes))
 }
 
+func TestBucket_GetWeightSelection(t *testing.T) {
+	var (
+		err     error
+		root    Bucket
+		r       *Bucket
+		buckets []strawBucket
+		ss      []Select
+		nodes   Nodes
+	)
+
+	g := NewGomegaWithT(t)
+	buckets = []strawBucket{
+		{"/Location:Asia/Country:Korea", Nodes{{1, 1}, {1, 3}}},
+		{"/Location:Asia/Country:China", Nodes{{2, 1}}},
+		{"/Location:Europe/Country:Germany/City:Hamburg", Nodes{{25, 8}}},
+		{"/Location:Europe/Country:Germany/City:Bremen", Nodes{{27, 1}, {29, 2}}},
+		{"/Location:Europe/Country:Spain/City:Madrid", Nodes{{17, 2}, {18, 1}}},
+		{"/Location:Europe/Country:Spain/City:Barcelona", Nodes{{26, 1}, {30, 10}}},
+		{"/Location:NorthAmerica/Country:USA/City:NewYork", Nodes{{19, 1}, {20, 9}}},
+	}
+
+	root, err = newStrawRoot(buckets...)
+	g.Expect(err).NotTo(HaveOccurred())
+
+	nodes = Nodes{{25, 8}, {30, 10}, {20, 9}, {1, 3}}
+
+	ss = []Select{
+		{Key: NodesBucket, Count: 4},
+	}
+	r = root.GetSelection(ss, defaultPivot)
+	g.Expect(r).NotTo(BeNil())
+	g.Expect(r.Nodelist()).To(Equal(nodes))
+
+	ss = []Select{
+		{Key: "Location", Count: 1},
+		{Key: "City", Count: 4},
+		{Key: NodesBucket, Count: 1},
+	}
+
+	nodes = Nodes{{n: 17, w: 2}, {n: 25, w: 8}, {n: 29, w: 2}, {n: 30, w: 10}}
+	r = root.GetSelection(ss, defaultPivot)
+	g.Expect(r).NotTo(BeNil())
+	g.Expect(r.Nodelist()).To(Equal(nodes))
+}
+
 func TestBucket_GetMaxSelection(t *testing.T) {
 	var (
 		err       error
 		exp, root Bucket
 		r         *Bucket
 		buckets   []bucket
+		sbuckets  []strawBucket
 		ss        []Select
 		fs        []Filter
 	)
@@ -391,6 +451,34 @@ func TestBucket_GetMaxSelection(t *testing.T) {
 	}
 	r = root.GetMaxSelection(SFGroup{Selectors: ss})
 	g.Expect(r).To(Equal(&exp))
+
+	// check if weights are correctly saved after filter operation
+	sbuckets = []strawBucket{
+		{"/Location:Europe/Country:Germany/City:Berlin", Nodes{{9, 1}, {10, 2}}},
+		{"/Location:Europe/Country:Germany/City:Hamburg", Nodes{{25, 1}}},
+		{"/Location:Europe/Country:Germany/City:Bremen", Nodes{{27, 1}, {29, 2}}},
+		{"/Location:Europe/Country:Italy/City:Rome", Nodes{{11, 1}, {12, 1}}},
+		{"/Location:Europe/Country:Spain/City:Madrid", Nodes{{17, 1}, {18, 1}}},
+		{"/Location:Europe/Country:Spain/City:Barcelona", Nodes{{26, 1}, {30, 1}}},
+	}
+	root, err = newStrawRoot(sbuckets...)
+	g.Expect(err).NotTo(HaveOccurred())
+
+	sbuckets = []strawBucket{
+		{"/Location:Europe/Country:Germany/City:Berlin", Nodes{{9, 1}, {10, 2}}},
+		{"/Location:Europe/Country:Germany/City:Hamburg", Nodes{{25, 1}}},
+		{"/Location:Europe/Country:Germany/City:Bremen", Nodes{{27, 1}, {29, 2}}},
+	}
+	exp, err = newStrawRoot(sbuckets...)
+	g.Expect(err).NotTo(HaveOccurred())
+
+	ss = []Select{
+		{Key: NodesBucket, Count: 1},
+	}
+	fs = []Filter{{Key: "Country", F: FilterEQ("Germany")}}
+	r = root.GetMaxSelection(SFGroup{Selectors: ss, Filters: fs})
+	g.Expect(r).To(Equal(&exp))
+
 }
 
 func TestNetMap_GetNodesByOption(t *testing.T) {
