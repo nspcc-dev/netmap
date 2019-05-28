@@ -35,11 +35,13 @@ type (
 		children []Bucket
 	}
 
+	// Node type represents single graph leaf with index N and weight W
 	Node struct {
 		N uint32
 		W uint64
 	}
 
+	// Nodes represents slice of graph leafs
 	Nodes []Node
 
 	// FilterFunc is generic type for filtering function on nodes.
@@ -76,20 +78,6 @@ func (n *Node) Read(r io.Reader) error {
 func (n Nodes) Len() int           { return len(n) }
 func (n Nodes) Less(i, j int) bool { return n[i].N < n[j].N }
 func (n Nodes) Swap(i, j int)      { n[i], n[j] = n[j], n[i] }
-func (n Nodes) N() []uint32 {
-	ns := make([]uint32, 0, len(n))
-	for i := range n {
-		ns = append(ns, n[i].N)
-	}
-	return ns
-}
-func (n Nodes) W() []uint64 {
-	w := make([]uint64, 0, len(n))
-	for i := range n {
-		w = append(w, n[i].W)
-	}
-	return w
-}
 func (n Nodes) Write(w io.Writer) error {
 	var err error
 	if err = binary.Write(w, binary.BigEndian, int32(len(n))); err != nil {
@@ -120,6 +108,24 @@ func (n *Nodes) Read(r io.Reader) error {
 		*n = nodes
 	}
 	return nil
+}
+
+// N returns slice of nodes indexes N
+func (n Nodes) N() []uint32 {
+	ns := make([]uint32, 0, len(n))
+	for i := range n {
+		ns = append(ns, n[i].N)
+	}
+	return ns
+}
+
+// W returns slice ow nodes weights W
+func (n Nodes) W() []uint64 {
+	w := make([]uint64, 0, len(n))
+	for i := range n {
+		w = append(w, n[i].W)
+	}
+	return w
 }
 
 // Hash uses murmur3 hash to return uint64
