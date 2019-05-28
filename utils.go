@@ -34,9 +34,9 @@ func intersect(a, b Nodes) Nodes {
 
 	for i, j := 0, 0; i < la && j < lb; {
 		switch true {
-		case a[i].n < b[j].n:
+		case a[i].N < b[j].N:
 			i++
-		case a[i].n > b[j].n:
+		case a[i].N > b[j].N:
 			j++
 		default:
 			c = append(c, a[i])
@@ -51,7 +51,7 @@ func intersect(a, b Nodes) Nodes {
 func diff(a Nodes, b map[uint32]struct{}) (c Nodes) {
 	c = make(Nodes, 0, len(a))
 	for _, e := range a {
-		if _, ok := b[e.n]; !ok {
+		if _, ok := b[e.N]; !ok {
 			c = append(c, e)
 		}
 	}
@@ -74,10 +74,10 @@ func union(a, b Nodes) Nodes {
 
 	for i, j = 0, 0; i < la && j < lb; {
 		switch true {
-		case a[i].n < b[j].n:
+		case a[i].N < b[j].N:
 			c = append(c, a[i])
 			i++
-		case a[i].n > b[j].n:
+		case a[i].N > b[j].N:
 			c = append(c, b[j])
 			j++
 		default:

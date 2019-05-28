@@ -339,7 +339,7 @@ func TestBucket_GetWeightSelection(t *testing.T) {
 		{Key: NodesBucket, Count: 1},
 	}
 
-	nodes = Nodes{{n: 17, w: 2}, {n: 25, w: 8}, {n: 29, w: 2}, {n: 30, w: 10}}
+	nodes = Nodes{{N: 17, W: 2}, {N: 25, W: 8}, {N: 29, W: 2}, {N: 30, W: 10}}
 	r = root.GetSelection(ss, defaultPivot)
 	g.Expect(r).NotTo(BeNil())
 	g.Expect(r.Nodelist()).To(Equal(nodes))
@@ -702,7 +702,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 	g.Expect(c).NotTo(BeNil())
 	g.Expect(c.Nodelist()).To(HaveLen(6))
 	for _, r := range c.Nodelist() {
-		g.Expect([]uint32{1, 2, 3, 6, 7, 8}).To(ContainElement(r.n))
+		g.Expect([]uint32{1, 2, 3, 6, 7, 8}).To(ContainElement(r.N))
 	}
 
 	nodesByLoc = map[string]Nodes{
@@ -725,7 +725,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 		c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
 		g.Expect(c).NotTo(BeNil())
 		for _, n := range c.Nodelist() {
-			g.Expect(nodesByLoc[loc]).NotTo(ContainElement(n.n))
+			g.Expect(nodesByLoc[loc]).NotTo(ContainElement(n.N))
 		}
 	}
 

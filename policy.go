@@ -36,8 +36,8 @@ type (
 	}
 
 	Node struct {
-		n uint32
-		w uint64
+		N uint32
+		W uint64
 	}
 
 	Nodes []Node
@@ -48,45 +48,45 @@ type (
 
 // Hash is a function from hrw.Hasher interface. It is implemented
 // to support weighted hrw therefore sort function sorts nodes
-// based on their `n` value.
+// based on their `N` value.
 func (n Node) Hash() uint64 {
-	return uint64(n.n)
+	return uint64(n.N)
 }
 func (n Node) Write(w io.Writer) error {
 	var err error
-	if err = binary.Write(w, binary.BigEndian, n.n); err != nil {
+	if err = binary.Write(w, binary.BigEndian, n.N); err != nil {
 		return err
 	}
-	if err = binary.Write(w, binary.BigEndian, n.w); err != nil {
+	if err = binary.Write(w, binary.BigEndian, n.W); err != nil {
 		return err
 	}
 	return nil
 }
 func (n *Node) Read(r io.Reader) error {
 	var err error
-	if err = binary.Read(r, binary.BigEndian, &n.n); err != nil {
+	if err = binary.Read(r, binary.BigEndian, &n.N); err != nil {
 		return err
 	}
-	if err = binary.Read(r, binary.BigEndian, &n.w); err != nil {
+	if err = binary.Read(r, binary.BigEndian, &n.W); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (n Nodes) Len() int           { return len(n) }
-func (n Nodes) Less(i, j int) bool { return n[i].n < n[j].n }
+func (n Nodes) Less(i, j int) bool { return n[i].N < n[j].N }
 func (n Nodes) Swap(i, j int)      { n[i], n[j] = n[j], n[i] }
 func (n Nodes) N() []uint32 {
 	ns := make([]uint32, 0, len(n))
 	for i := range n {
-		ns = append(ns, n[i].n)
+		ns = append(ns, n[i].N)
 	}
 	return ns
 }
 func (n Nodes) W() []uint64 {
 	w := make([]uint64, 0, len(n))
 	for i := range n {
-		w = append(w, n[i].w)
+		w = append(w, n[i].W)
 	}
 	return w
 }
@@ -319,7 +319,7 @@ func (b Bucket) GetMaxSelection(s SFGroup) (r *Bucket) {
 	)
 
 	for _, c := range forbidden {
-		excludes[c.n] = struct{}{}
+		excludes[c.N] = struct{}{}
 	}
 	for _, c := range s.Exclude {
 		excludes[c] = struct{}{}
@@ -455,7 +455,7 @@ func (b *Bucket) UpdateIndices(tr map[uint32]Node) Bucket {
 		children = append(children, b.children[i].UpdateIndices(tr))
 	}
 	for i := range b.nodes {
-		nodes = append(nodes, tr[b.nodes[i].n])
+		nodes = append(nodes, tr[b.nodes[i].N])
 	}
 	sort.Sort(nodes)
 
@@ -597,12 +597,12 @@ func (b Bucket) Children() []Bucket {
 	return b.children
 }
 
-// AddNode adds node n with options opts to b.
+// AddNode adds node N with options opts to b.
 func (b *Bucket) AddNode(n uint32, opts ...string) error {
 	return b.addNode(Node{n, 0}, opts...)
 }
 
-// AddStrawNode adds node n with options opts to b.
+// AddStrawNode adds node N with options opts to b.
 func (b *Bucket) AddStrawNode(n Node, opts ...string) error {
 	return b.addNode(n, opts...)
 }
@@ -648,7 +648,7 @@ func (b *Bucket) addNodes(bs []Bucket, n Nodes) error {
 	return nil
 }
 
-// AddBucket add bucket corresponding to option o with nodes n as subbucket to b.
+// AddBucket add bucket corresponding to option o with nodes N as subbucket to b.
 func (b *Bucket) AddBucket(o string, n Nodes) error {
 	if o != Separator && (!strings.HasPrefix(o, Separator) || strings.HasSuffix(o, Separator)) {
 		return errors.Errorf("must start and not end with '%s'", Separator)
@@ -691,10 +691,10 @@ loop:
 		case j == lb:
 			c = append(c, a[i:]...)
 			break loop
-		case a[i].n < b[j].n:
+		case a[i].N < b[j].N:
 			c = append(c, a[i])
 			i++
-		case a[i].n > b[j].n:
+		case a[i].N > b[j].N:
 			c = append(c, b[j])
 			j++
 		default:
