@@ -14,7 +14,7 @@ func getNodes(b Bucket, path []Bucket) (nodes Nodes) {
 
 func contains(nodes Nodes, n Node) bool {
 	for _, i := range nodes {
-		if i == n {
+		if i.N == n.N {
 			return true
 		}
 	}

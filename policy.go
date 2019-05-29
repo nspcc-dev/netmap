@@ -35,13 +35,13 @@ type (
 		children []Bucket
 	}
 
-	// Node type represents single graph leaf with index N and weight W
+	// Node type represents single graph leaf with index N and weight W.
 	Node struct {
 		N uint32
 		W uint64
 	}
 
-	// Nodes represents slice of graph leafs
+	// Nodes represents slice of graph leafs.
 	Nodes []Node
 
 	// FilterFunc is generic type for filtering function on nodes.
@@ -110,8 +110,8 @@ func (n *Nodes) Read(r io.Reader) error {
 	return nil
 }
 
-// N returns slice of nodes indexes N
-func (n Nodes) N() []uint32 {
+// Nodes returns slice of nodes indexes N.
+func (n Nodes) Nodes() []uint32 {
 	ns := make([]uint32, 0, len(n))
 	for i := range n {
 		ns = append(ns, n[i].N)
@@ -119,8 +119,8 @@ func (n Nodes) N() []uint32 {
 	return ns
 }
 
-// W returns slice ow nodes weights W
-func (n Nodes) W() []uint64 {
+// Weights returns slice ow nodes weights W.
+func (n Nodes) Weights() []uint64 {
 	w := make([]uint64, 0, len(n))
 	for i := range n {
 		w = append(w, n[i].W)
@@ -128,7 +128,7 @@ func (n Nodes) W() []uint64 {
 	return w
 }
 
-// Hash uses murmur3 hash to return uint64
+// Hash uses murmur3 hash to return uint64.
 func (b Bucket) Hash() uint64 {
 	return hrw.Hash([]byte(b.Key + b.Value))
 }
@@ -194,8 +194,8 @@ func (b Bucket) Copy() Bucket {
 }
 
 // IsValid checks if bucket is well-formed:
-// - all nodes contained in sub-bucket must belong to this
-// - there must be no nodes belonging to 2 buckets
+// - all nodes contained in sub-bucket must belong to this;
+// - there must be no nodes belonging to 2 buckets.
 func (b Bucket) IsValid() bool {
 	var (
 		ns    Nodes
@@ -366,7 +366,7 @@ func (b Bucket) GetSelection(ss []Select, pivot []byte) *Bucket {
 		nodes := make(Nodes, len(b.nodes))
 		copy(nodes, b.nodes)
 		if len(pivot) != 0 {
-			hrw.SortSliceByWeightValue(nodes, nodes.W(), pivotHash)
+			hrw.SortSliceByWeightValue(nodes, nodes.Weights(), pivotHash)
 		}
 		root.nodes = nodes[:count]
 		return &root
@@ -609,6 +609,7 @@ func (b *Bucket) AddNode(n uint32, opts ...string) error {
 }
 
 // AddStrawNode adds straw node n with options opts to b.
+// Straws are an analogy of weights in CRUSH algorithm paper.
 func (b *Bucket) AddStrawNode(n Node, opts ...string) error {
 	return b.addNode(n, opts...)
 }
