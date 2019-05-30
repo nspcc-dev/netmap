@@ -31,10 +31,10 @@ func (b Bucket) dumpTo(g Graph) error {
 		attrsN = map[string]string{"shape": "box"}
 		attrsE = map[string]string{"style": "dotted"}
 		for _, n := range b.nodes {
-			if err = g.AddNode(g.Name, strconv.Itoa(int(n)), attrsN); err != nil {
+			if err = g.AddNode(g.Name, strconv.Itoa(int(n.N)), attrsN); err != nil {
 				return err
 			}
-			if err = g.AddEdge(bname, strconv.Itoa(int(n)), true, attrsE); err != nil {
+			if err = g.AddEdge(bname, strconv.Itoa(int(n.N)), true, attrsE); err != nil {
 				return err
 			}
 		}
@@ -103,7 +103,7 @@ func selectBucket(g Graph, b Bucket) error {
 
 	if len(b.children) == 0 {
 		for _, n := range b.nodes {
-			applyAttrs(g, bname, strconv.Itoa(int(n)), attrs)
+			applyAttrs(g, bname, strconv.Itoa(int(n.N)), attrs)
 		}
 		return nil
 	}

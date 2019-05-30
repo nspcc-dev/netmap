@@ -1,6 +1,6 @@
 package netmap
 
-func getNodes(b Bucket, path []Bucket) (nodes []uint32) {
+func getNodes(b Bucket, path []Bucket) (nodes Nodes) {
 	if len(path) == 0 {
 		return b.Nodelist()
 	}
@@ -12,16 +12,16 @@ func getNodes(b Bucket, path []Bucket) (nodes []uint32) {
 	return nil
 }
 
-func contains(nodes []uint32, n uint32) bool {
+func contains(nodes Nodes, n Node) bool {
 	for _, i := range nodes {
-		if i == n {
+		if i.N == n.N {
 			return true
 		}
 	}
 	return false
 }
 
-func intersect(a, b []uint32) []uint32 {
+func intersect(a, b Nodes) Nodes {
 	if a == nil {
 		return b
 	}
@@ -29,14 +29,14 @@ func intersect(a, b []uint32) []uint32 {
 	var (
 		la, lb = len(a), len(b)
 		l      = min(la, lb)
-		c      = make([]uint32, 0, l)
+		c      = make(Nodes, 0, l)
 	)
 
 	for i, j := 0, 0; i < la && j < lb; {
 		switch true {
-		case a[i] < b[j]:
+		case a[i].N < b[j].N:
 			i++
-		case a[i] > b[j]:
+		case a[i].N > b[j].N:
 			j++
 		default:
 			c = append(c, a[i])
@@ -48,17 +48,17 @@ func intersect(a, b []uint32) []uint32 {
 	return c
 }
 
-func diff(a []uint32, b map[uint32]struct{}) (c []uint32) {
-	c = make([]uint32, 0, len(a))
+func diff(a Nodes, b map[uint32]struct{}) (c Nodes) {
+	c = make(Nodes, 0, len(a))
 	for _, e := range a {
-		if _, ok := b[e]; !ok {
+		if _, ok := b[e.N]; !ok {
 			c = append(c, e)
 		}
 	}
 	return
 }
 
-func union(a, b []uint32) []uint32 {
+func union(a, b Nodes) Nodes {
 	if a == nil {
 		return b
 	} else if b == nil {
@@ -68,16 +68,16 @@ func union(a, b []uint32) []uint32 {
 	var (
 		la, lb = len(a), len(b)
 		l      = la + lb
-		c      = make([]uint32, 0, l)
+		c      = make(Nodes, 0, l)
 		i, j   int
 	)
 
 	for i, j = 0, 0; i < la && j < lb; {
 		switch true {
-		case a[i] < b[j]:
+		case a[i].N < b[j].N:
 			c = append(c, a[i])
 			i++
-		case a[i] > b[j]:
+		case a[i].N > b[j].N:
 			c = append(c, b[j])
 			j++
 		default:
