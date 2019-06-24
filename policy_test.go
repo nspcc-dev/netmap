@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/require"
 )
 
 type bucket struct {
@@ -46,23 +46,21 @@ func newStrawRoot(bs ...strawBucket) (b Bucket, err error) {
 
 func TestBucket_RuntimeError(t *testing.T) {
 	t.Run("slice bounds out of range", func(t *testing.T) {
-		g := NewGomegaWithT(t)
 		buckets := []bucket{
 			{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
 		}
 		root, err := newRoot(buckets...)
-		g.Expect(err).NotTo(HaveOccurred())
+		require.NoError(t, err)
 
 		ss := []Select{
 			{Key: NodesBucket, Count: 3}, // available only two
 		}
 
 		r := root.GetSelection(ss, defaultPivot)
-		g.Expect(r).To(BeNil())
+		require.Nil(t, r)
 	})
 
 	t.Run("test hrw distribution", func(t *testing.T) {
-		g := NewGomegaWithT(t)
 		buckets := []bucket{
 			{"/Location:America/Country:USA/City:NewYork", []uint32{0, 1, 2, 3, 4, 5}},
 		}
@@ -73,30 +71,29 @@ func TestBucket_RuntimeError(t *testing.T) {
 		}
 
 		root, err := newRoot(buckets...)
-		g.Expect(err).NotTo(HaveOccurred())
+		require.NoError(t, err)
 
 		r1 := root.GetSelection(ss, []byte{1, 2, 3})
-		g.Expect(r1).NotTo(BeNil())
+		require.NotNil(t, r1)
 
 		r2 := root.GetSelection(ss, []byte{1, 2, 4})
-		g.Expect(r2).NotTo(BeNil())
+		require.NotNil(t, r2)
 
 		r3 := root.GetSelection(ss, []byte{1, 2, 5})
-		g.Expect(r3).NotTo(BeNil())
+		require.NotNil(t, r3)
 
-		g.Expect(r1.nodes).NotTo(BeEquivalentTo(r2.nodes))
-		g.Expect(r1.nodes).NotTo(BeEquivalentTo(r3.nodes))
-		g.Expect(r2.nodes).NotTo(BeEquivalentTo(r3.nodes))
+		require.NotEqual(t, r1.nodes, r2.nodes)
+		require.NotEqual(t, r1.nodes, r3.nodes)
+		require.NotEqual(t, r2.nodes, r3.nodes)
 	})
 
 	t.Run("regression test", func(t *testing.T) {
-		g := NewGomegaWithT(t)
 		buckets := []bucket{
 			{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
 			{"/Location:Europe/Country:Spain/City:Barcelona", []uint32{16, 19}},
 		}
 		root, err := newRoot(buckets...)
-		g.Expect(err).NotTo(HaveOccurred())
+		require.NoError(t, err)
 
 		ss := []Select{
 			{Key: "Location", Count: 1},
@@ -104,8 +101,8 @@ func TestBucket_RuntimeError(t *testing.T) {
 		}
 
 		r := root.GetSelection(ss, defaultPivot)
-		g.Expect(r).NotTo(BeNil())
-		g.Expect(r.nodes).To(HaveLen(3))
+		require.NotNil(t, r)
+		require.Len(t, r.nodes, 3)
 	})
 }
 
@@ -116,23 +113,21 @@ func TestBucket_IsValid(t *testing.T) {
 		err     error
 	)
 
-	g := NewGomegaWithT(t)
-
 	buckets = []bucket{
 		{"/Location:Europe/Country:Germany", []uint32{1, 3}},
 		{"/Location:Asia/Country:China", []uint32{2}},
 	}
 	b, err = newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
-	g.Expect(b.IsValid()).To(BeTrue(), "simple bucket is valid")
+	require.NoError(t, err)
+	require.Truef(t, b.IsValid(), "simple bucket should be valid")
 
 	buckets = []bucket{
 		{"/Location:Europe/Country:Germany", []uint32{1, 3}},
 		{"/Location:Asia/Country:China", []uint32{1, 2}},
 	}
 	b, err = newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
-	g.Expect(b.IsValid()).To(BeFalse(), "different children must not intersect")
+	require.NoError(t, err)
+	require.Falsef(t, b.IsValid(), "different children must not intersect")
 
 	b = Bucket{
 		Key:   "Location",
@@ -146,7 +141,7 @@ func TestBucket_IsValid(t *testing.T) {
 			},
 		},
 	}
-	g.Expect(b.IsValid()).To(BeFalse(), "parent must contain all child nodes")
+	require.Falsef(t, b.IsValid(), "parent must contain all child nodes")
 
 	// parent can contain more elements
 	b = Bucket{
@@ -161,7 +156,7 @@ func TestBucket_IsValid(t *testing.T) {
 			},
 		},
 	}
-	g.Expect(b.IsValid()).To(BeTrue(), "parent can contain more nodes")
+	require.Truef(t, b.IsValid(), "parent can contain more nodes")
 }
 
 func TestBucket_checkConflicts(t *testing.T) {
@@ -171,33 +166,31 @@ func TestBucket_checkConflicts(t *testing.T) {
 		buckets []bucket
 	)
 
-	g := NewGomegaWithT(t)
-
 	buckets = []bucket{
 		{"/Location:Europe/Country:Germany", []uint32{1, 3}},
 		{"/Location:Asia/Country:China", []uint32{1}},
 	}
 	b1, err = newRoot(buckets[:1]...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	b2, err = newRoot(buckets[1:]...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
-	g.Expect(b1.CheckConflicts(b2)).To(BeTrue())
-	g.Expect(b2.CheckConflicts(b1)).To(BeTrue())
+	require.True(t, b1.CheckConflicts(b2))
+	require.True(t, b2.CheckConflicts(b1))
 
 	buckets = []bucket{
 		{"/Location:Europe/Country:Germany", []uint32{1, 3}},
 		{"/Location:Europe/Country:Germany", []uint32{2, 3}},
 	}
 	b1, err = newRoot(buckets[:1]...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	b2, err = newRoot(buckets[1:]...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
-	g.Expect(b1.CheckConflicts(b2)).To(BeFalse())
-	g.Expect(b2.CheckConflicts(b1)).To(BeFalse())
+	require.False(t, b1.CheckConflicts(b2))
+	require.False(t, b2.CheckConflicts(b1))
 }
 
 func TestBucket_Merge(t *testing.T) {
@@ -207,23 +200,21 @@ func TestBucket_Merge(t *testing.T) {
 		buckets     []bucket
 	)
 
-	g := NewGomegaWithT(t)
-
 	buckets = []bucket{
 		{"/Location:Europe/Country:Germany", []uint32{1, 3}},
 		{"/Location:Asia/Country:China", []uint32{2}},
 	}
 	b1, err = newRoot(buckets[:1]...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	b2, err = newRoot(buckets[1:]...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	exp, err = newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	b1.Merge(b2)
-	g.Expect(b1).To(Equal(exp))
+	require.Equal(t, exp, b1)
 
 	buckets = []bucket{
 		{"/Location:Europe/Country:Germany", []uint32{1, 3}},
@@ -233,16 +224,16 @@ func TestBucket_Merge(t *testing.T) {
 		{"/Location:Europe/Country:Germany", []uint32{3, 4}},
 	}
 	b1, err = newRoot(buckets[:2]...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	b2, err = newRoot(buckets[2:]...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	exp, err = newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	b1.Merge(b2)
-	g.Expect(b1).To(Equal(exp))
+	require.Equal(t, exp, b1)
 }
 
 func TestBucket_GetSelection(t *testing.T) {
@@ -254,7 +245,6 @@ func TestBucket_GetSelection(t *testing.T) {
 		ss        []Select
 	)
 
-	g := NewGomegaWithT(t)
 	buckets = []bucket{
 		{"/Location:Asia/Country:Korea", []uint32{1, 3}},
 		{"/Location:Asia/Country:China", []uint32{2}},
@@ -266,7 +256,7 @@ func TestBucket_GetSelection(t *testing.T) {
 	}
 
 	root, err = newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	buckets = []bucket{
 		{"/Location:Europe/Country:Germany/City:Hamburg", []uint32{25}},
@@ -274,30 +264,30 @@ func TestBucket_GetSelection(t *testing.T) {
 	}
 
 	exp, err = newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	ss = []Select{
 		{Key: "Location", Count: 1},
 		{Key: "City", Count: 2},
 	}
 	r = root.GetSelection(ss, defaultPivot)
-	g.Expect(r).NotTo(BeNil())
-	g.Expect(r.nodes).To(Equal(exp.nodes))
+	require.NotNil(t, r)
+	require.Equal(t, r.nodes, exp.nodes)
 
 	buckets = []bucket{
 		{"/Location:Europe/Country:Spain/City:Barcelona", []uint32{26, 30}},
 		{"/Location:NorthAmerica/Country:USA/City:NewYork", []uint32{19, 20}},
 	}
 	exp, err = newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	ss = []Select{
 		{Key: "Location", Count: 2},
 		{Key: "City", Count: 1},
 	}
 	r = root.GetSelection(ss, defaultPivot)
-	g.Expect(r).NotTo(BeNil())
-	g.Expect(r.nodes).To(Equal(exp.nodes))
+	require.NotNil(t, r)
+	require.Equal(t, r.nodes, exp.nodes)
 }
 
 func TestBucket_GetWeightSelection(t *testing.T) {
@@ -310,7 +300,6 @@ func TestBucket_GetWeightSelection(t *testing.T) {
 		nodes   Nodes
 	)
 
-	g := NewGomegaWithT(t)
 	buckets = []strawBucket{
 		{"/Location:Asia/Country:Korea", Nodes{{N: 1, W: 1}, {N: 3, W: 3}}},
 		{"/Location:Asia/Country:China", Nodes{{N: 2, W: 1}}},
@@ -322,7 +311,7 @@ func TestBucket_GetWeightSelection(t *testing.T) {
 	}
 
 	root, err = newStrawRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	nodes = Nodes{{N: 25, W: 8}, {N: 30, W: 10}, {N: 20, W: 9}, {N: 3, W: 3}}
 
@@ -330,8 +319,8 @@ func TestBucket_GetWeightSelection(t *testing.T) {
 		{Key: NodesBucket, Count: 4},
 	}
 	r = root.GetSelection(ss, defaultPivot)
-	g.Expect(r).NotTo(BeNil())
-	g.Expect(r.Nodelist()).To(Equal(nodes))
+	require.NotNil(t, r)
+	require.Equal(t, r.Nodelist(), nodes)
 
 	ss = []Select{
 		{Key: "Location", Count: 1},
@@ -341,8 +330,8 @@ func TestBucket_GetWeightSelection(t *testing.T) {
 
 	nodes = Nodes{{N: 17, W: 2}, {N: 25, W: 8}, {N: 29, W: 2}, {N: 30, W: 10}}
 	r = root.GetSelection(ss, defaultPivot)
-	g.Expect(r).NotTo(BeNil())
-	g.Expect(r.Nodelist()).To(Equal(nodes))
+	require.NotNil(t, r)
+	require.Equal(t, r.Nodelist(), nodes)
 }
 
 func TestBucket_GetMaxSelection(t *testing.T) {
@@ -355,8 +344,6 @@ func TestBucket_GetMaxSelection(t *testing.T) {
 		ss        []Select
 		fs        []Filter
 	)
-
-	g := NewGomegaWithT(t)
 
 	buckets = []bucket{
 		{"/Location:Asia/Country:Korea", []uint32{1, 3}},
@@ -377,7 +364,7 @@ func TestBucket_GetMaxSelection(t *testing.T) {
 	}
 
 	root, err = newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	buckets = []bucket{
 		{"/Location:Europe/Country:Germany/City:Berlin", []uint32{9, 10}},
@@ -387,13 +374,13 @@ func TestBucket_GetMaxSelection(t *testing.T) {
 		{"/Location:Europe/Country:Spain/City:Barcelona", []uint32{26, 30}},
 	}
 	exp, err = newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	// check if subgraph with simple select without node-filters works
 	ss = []Select{{Key: "Country", Count: 1}}
 	fs = []Filter{{Key: "Country", F: FilterIn("Germany", "Spain")}}
 	r = root.GetMaxSelection(SFGroup{Selectors: ss, Filters: fs})
-	g.Expect(r).To(Equal(&exp))
+	require.Equal(t, &exp, r)
 
 	// check if select with count works
 	ss = []Select{
@@ -401,7 +388,7 @@ func TestBucket_GetMaxSelection(t *testing.T) {
 		{Key: "City", Count: 2},
 	}
 	r = root.GetMaxSelection(SFGroup{Selectors: ss})
-	g.Expect(r).To(Equal(&exp))
+	require.Equal(t, &exp, r)
 
 	// check if count on nodes also works
 	ss = []Select{
@@ -411,28 +398,28 @@ func TestBucket_GetMaxSelection(t *testing.T) {
 	}
 	fs = []Filter{{Key: "Location", F: FilterEQ("Europe")}}
 	r = root.GetMaxSelection(SFGroup{Selectors: ss, Filters: fs})
-	g.Expect(r).To(Equal(&exp))
+	require.Equal(t, &exp, r)
 
 	buckets = []bucket{
 		{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
 		{"/Location:Europe/Country:Spain/City:Barcelona", []uint32{26, 30}},
 	}
 	exp, err = newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	r = root.GetMaxSelection(SFGroup{
 		Selectors: ss,
 		Filters:   fs,
 		Exclude:   []uint32{9, 27, 29},
 	})
-	g.Expect(r).To(Equal(&exp))
+	require.Equal(t, &exp, r)
 
 	r = root.GetMaxSelection(SFGroup{
 		Selectors: ss,
 		Filters:   fs,
 		Exclude:   []uint32{9, 27, 29, 26},
 	})
-	g.Expect(r).To(BeNil())
+	require.Nil(t, r)
 
 	buckets = []bucket{
 		{"/Location:Europe/Country:Germany/City:Berlin", []uint32{9, 10}},
@@ -443,14 +430,14 @@ func TestBucket_GetMaxSelection(t *testing.T) {
 		{"/Location:Europe/Country:Spain/City:Barcelona", []uint32{26, 30}},
 	}
 	exp, err = newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	// check if select with count works
 	ss = []Select{
 		{Key: "City", Count: 2},
 	}
 	r = root.GetMaxSelection(SFGroup{Selectors: ss})
-	g.Expect(r).To(Equal(&exp))
+	require.Equal(t, &exp, r)
 
 	// check if weights are correctly saved after filter operation
 	sbuckets = []strawBucket{
@@ -462,7 +449,7 @@ func TestBucket_GetMaxSelection(t *testing.T) {
 		{"/Location:Europe/Country:Spain/City:Barcelona", Nodes{{N: 26, W: 1}, {N: 30, W: 1}}},
 	}
 	root, err = newStrawRoot(sbuckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	sbuckets = []strawBucket{
 		{"/Location:Europe/Country:Germany/City:Berlin", Nodes{{N: 9, W: 1}, {N: 10, W: 2}}},
@@ -470,14 +457,14 @@ func TestBucket_GetMaxSelection(t *testing.T) {
 		{"/Location:Europe/Country:Germany/City:Bremen", Nodes{{N: 27, W: 1}, {N: 29, W: 2}}},
 	}
 	exp, err = newStrawRoot(sbuckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	ss = []Select{
 		{Key: NodesBucket, Count: 1},
 	}
 	fs = []Filter{{Key: "Country", F: FilterEQ("Germany")}}
 	r = root.GetMaxSelection(SFGroup{Selectors: ss, Filters: fs})
-	g.Expect(r).To(Equal(&exp))
+	require.Equal(t, &exp, r)
 
 }
 
@@ -485,8 +472,6 @@ func TestNetMap_GetNodesByOption(t *testing.T) {
 	var (
 		fr, ge, eu, root Bucket
 	)
-
-	g := NewGomegaWithT(t)
 
 	fr = Bucket{
 		Key:   "Country",
@@ -510,10 +495,10 @@ func TestNetMap_GetNodesByOption(t *testing.T) {
 	}
 
 	n1 := root.GetNodesByOption("/Location:Europe/Country:Germany")
-	g.Expect(n1.Nodes()).To(Equal([]uint32{2, 4}))
+	require.Equal(t, []uint32{2, 4}, n1.Nodes())
 
 	n2 := root.GetNodesByOption("/Location:Europe/Country:Russia")
-	g.Expect(n2).To(HaveLen(0))
+	require.Len(t, n2.Nodes(), 0)
 }
 
 func TestBucket_AddBucket(t *testing.T) {
@@ -521,8 +506,6 @@ func TestBucket_AddBucket(t *testing.T) {
 		root, nroot Bucket
 		err         error
 	)
-
-	g := NewGomegaWithT(t)
 
 	root = Bucket{
 		children: []Bucket{{
@@ -540,22 +523,22 @@ func TestBucket_AddBucket(t *testing.T) {
 		bucket{"/Location:Europe/Country:France", nil},
 		bucket{"/Location:Europe/Country:Germany", nil},
 	)
-	g.Expect(err).NotTo(HaveOccurred())
-	g.Expect(nroot).To(Equal(root))
+	require.NoError(t, err)
+	require.Equal(t, root, nroot)
 
 	// we must correctly handle addition of options without existing parent
 	nroot, err = newRoot(
 		bucket{"/Location:Europe/Country:France", nil},
 		bucket{"/Location:Europe/Country:Germany", nil},
 	)
-	g.Expect(err).NotTo(HaveOccurred())
-	g.Expect(nroot).To(Equal(root))
+	require.NoError(t, err)
+	require.Equal(t, root, nroot)
 
 	// nothing should happen if we add an already existing option
 	err = nroot.AddBucket("/Location:Europe", nil)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
-	g.Expect(nroot).To(Equal(root))
+	require.Equal(t, root, nroot)
 }
 
 func TestBucket_AddNode(t *testing.T) {
@@ -565,19 +548,17 @@ func TestBucket_AddNode(t *testing.T) {
 		err   error
 	)
 
-	g := NewGomegaWithT(t)
-
 	nroot, err = newRoot(
 		bucket{"/Location:Europe/Country:France", []uint32{1, 3}},
 		bucket{"/Location:Europe/Country:Germany", []uint32{7}},
 	)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	ns = nroot.GetNodesByOption("/Location:Europe/Country:Germany")
-	g.Expect(ns.Nodes()).To(Equal([]uint32{7}))
+	require.Equal(t, []uint32{7}, ns.Nodes())
 
 	ns = nroot.GetNodesByOption("/Location:Europe")
-	g.Expect(ns.Nodes()).To(Equal([]uint32{1, 3, 7}))
+	require.Equal(t, []uint32{1, 3, 7}, ns.Nodes())
 }
 
 func TestNetMap_AddNode(t *testing.T) {
@@ -586,26 +567,24 @@ func TestNetMap_AddNode(t *testing.T) {
 		err  error
 	)
 
-	g := NewGomegaWithT(t)
-
 	root, err = newRoot(
 		bucket{"/Location:Europe/Country:France", nil},
 		bucket{"/Location:Europe/Country:Germany", nil},
 	)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	err = root.AddNode(1, "/Location:Europe/Country:France")
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 	err = root.AddNode(2, "/Location:Europe/Country:France")
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 	err = root.AddNode(3, "/Location:Europe/Country:Germany")
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	ns := root.GetNodesByOption("/Location:Europe/Country:Germany")
-	g.Expect(ns.Nodes()).To(Equal([]uint32{3}))
+	require.Equal(t, []uint32{3}, ns.Nodes())
 
 	ns = root.GetNodesByOption("/Location:Europe")
-	g.Expect(ns.Nodes()).To(Equal([]uint32{1, 2, 3}))
+	require.Equal(t, []uint32{1, 2, 3}, ns.Nodes())
 }
 
 func TestBucket_MarshalBinary(t *testing.T) {
@@ -615,19 +594,17 @@ func TestBucket_MarshalBinary(t *testing.T) {
 		err           error
 	)
 
-	g := NewGomegaWithT(t)
-
 	before, err = newRoot(
 		bucket{"/Location:Europe", []uint32{1}},
 		bucket{"/Location:Asia", []uint32{2}},
 	)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	data, err = before.MarshalBinary()
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 	err = after.UnmarshalBinary(data)
-	g.Expect(err).NotTo(HaveOccurred())
-	g.Expect(before).To(Equal(after))
+	require.NoError(t, err)
+	require.Equal(t, before, after)
 }
 
 func TestBucket_Nodelist(t *testing.T) {
@@ -637,7 +614,6 @@ func TestBucket_Nodelist(t *testing.T) {
 		buckets []bucket
 		err     error
 	)
-	g := NewGomegaWithT(t)
 
 	buckets = []bucket{
 		{"/Location:Asia/Country:Korea", []uint32{1, 3}},
@@ -655,15 +631,15 @@ func TestBucket_Nodelist(t *testing.T) {
 	}
 
 	root, err = newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	root.nodes = nil
 
 	root.fillNodes()
 	nodes = root.Nodelist()
-	g.Expect(nodes).To(HaveLen(24))
+	require.Len(t, nodes, 24)
 	for i := uint32(1); i <= 24; i++ {
-		g.Expect(nodes.Nodes()).To(ContainElement(i))
+		require.Contains(t, nodes.Nodes(), i)
 	}
 }
 
@@ -676,8 +652,6 @@ func TestNetMap_FindGraph(t *testing.T) {
 		fs         []Filter
 		err        error
 	)
-
-	g := NewGomegaWithT(t)
 
 	buckets := []bucket{
 		{"/Location:Asia/Country:Korea", []uint32{1, 3}},
@@ -695,14 +669,14 @@ func TestNetMap_FindGraph(t *testing.T) {
 		{"/Type:HDD", []uint32{14, 21, 22}},
 	}
 	root, err = newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	ss = []Select{{Key: NodesBucket, Count: 6}}
 	c = root.FindGraph(nil, SFGroup{Selectors: ss})
-	g.Expect(c).NotTo(BeNil())
-	g.Expect(c.Nodelist()).To(HaveLen(6))
+	require.NotNil(t, c)
+	require.Len(t, c.Nodelist(), 6)
 	for _, r := range c.Nodelist() {
-		g.Expect([]uint32{1, 2, 3, 6, 7, 8}).To(ContainElement(r.N))
+		require.Contains(t, []uint32{1, 2, 3, 6, 7, 8}, r.N)
 	}
 
 	nodesByLoc = map[string]Nodes{
@@ -723,9 +697,9 @@ func TestNetMap_FindGraph(t *testing.T) {
 		}
 
 		c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
-		g.Expect(c).NotTo(BeNil())
+		require.NotNil(t, c)
 		for _, n := range c.Nodelist() {
-			g.Expect(nodesByLoc[loc]).NotTo(ContainElement(n.N))
+			require.NotContains(t, nodesByLoc[loc], n.N)
 		}
 	}
 
@@ -738,18 +712,18 @@ func TestNetMap_FindGraph(t *testing.T) {
 	}
 
 	exp, err = newRoot(bucket{"/Location:Europe/Country:Russia/City:Moscow", []uint32{13, 14}})
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
-	g.Expect(c).NotTo(BeNil())
-	g.Expect(c).To(Equal(&exp))
+	require.NotNil(t, c)
+	require.Equal(t, &exp, c)
 
 	buckets = []bucket{
 		{"/Location:Asia/Country:Korea", []uint32{1, 3}},
 		{"/Location:Asia/Country:China", []uint32{2}},
 	}
 	exp, err = newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	// check if Select.Count works
 	ss = []Select{
@@ -760,11 +734,11 @@ func TestNetMap_FindGraph(t *testing.T) {
 		{Key: "Location", F: FilterEQ("Asia")},
 	}
 	c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
-	g.Expect(c).To(Equal(&exp))
+	require.Equal(t, &exp, c)
 
 	ss[1].Count = 4
 	c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
-	g.Expect(c).To(BeNil())
+	require.Nil(t, c)
 
 	buckets = []bucket{
 		{"/Location:NorthAmerica/Country:USA/City:NewYork", []uint32{19, 20}},
@@ -772,7 +746,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 		{"/Location:NorthAmerica/Country:Mexico", []uint32{23, 24}},
 	}
 	exp, err = newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	// check with NotIn filter
 	ss = []Select{
@@ -782,9 +756,9 @@ func TestNetMap_FindGraph(t *testing.T) {
 		{Key: "Location", F: FilterNotIn("Asia", "Europe")},
 	}
 	c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
-	g.Expect(c).To(Equal(&exp))
+	require.Equal(t, &exp, c)
 	for _, n := range c.Nodelist() {
-		g.Expect(nodesByLoc["NorthAmerica"]).To(ContainElement(n))
+		require.Contains(t, nodesByLoc["NorthAmerica"], n)
 	}
 
 	// check with 2 successive filters
@@ -797,14 +771,14 @@ func TestNetMap_FindGraph(t *testing.T) {
 		{Key: "Country", F: FilterNotIn("USA", "Canada", "Mexico")},
 	}
 	c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
-	g.Expect(c).To(BeNil())
+	require.Nil(t, c)
 
 	ss = []Select{
 		{Key: "Location", Count: 2},
 		{Key: NodesBucket, Count: 3},
 	}
 	c = root.FindGraph(nil, SFGroup{Selectors: ss})
-	g.Expect(c).NotTo(BeNil())
+	require.NotNil(t, c)
 
 	ss = []Select{
 		{Key: "Location", Count: 1},
@@ -814,9 +788,9 @@ func TestNetMap_FindGraph(t *testing.T) {
 		{Key: "Location", F: FilterEQ("Europe")},
 	}
 	c = root.FindGraph(nil, SFGroup{Selectors: ss, Filters: fs})
-	g.Expect(c).NotTo(BeNil())
+	require.NotNil(t, c)
 	for _, n := range c.Nodelist() {
-		g.Expect(nodesByLoc["Europe"]).To(ContainElement(n))
+		require.Contains(t, nodesByLoc["Europe"], n)
 	}
 
 	buckets = []bucket{
@@ -825,7 +799,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 		{"/Location:NorthAmerica/Country:Canada", []uint32{21, 22}},
 	}
 	exp, err = newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	// multiple selectors
 	c = root.FindGraph(nil,
@@ -842,7 +816,7 @@ func TestNetMap_FindGraph(t *testing.T) {
 			Filters:   []Filter{{Key: "Country", F: FilterEQ("Canada")}},
 		},
 	)
-	g.Expect(c).To(Equal(&exp))
+	require.Equal(t, &exp, c)
 }
 
 func TestBucket_FindNodes(t *testing.T) {
@@ -854,8 +828,6 @@ func TestBucket_FindNodes(t *testing.T) {
 		fs         []Filter
 		err        error
 	)
-
-	g := NewGomegaWithT(t)
 
 	buckets := []bucket{
 		{"/Location:Asia/Country:Korea", []uint32{1, 3}},
@@ -873,7 +845,7 @@ func TestBucket_FindNodes(t *testing.T) {
 	}
 
 	root, err = newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	nodesByLoc = map[string]Nodes{
 		"Asia":         root.GetNodesByOption("/Location:Asia"),
@@ -892,9 +864,9 @@ func TestBucket_FindNodes(t *testing.T) {
 			{Key: "Location", F: FilterNE(loc)},
 		}
 		ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
-		g.Expect(ns).NotTo(HaveLen(0))
+		require.NotEmpty(t, ns)
 		for _, n := range ns {
-			g.Expect(nodesByLoc[loc]).NotTo(ContainElement(n))
+			require.NotContains(t, nodesByLoc[loc], n)
 		}
 	}
 
@@ -907,9 +879,9 @@ func TestBucket_FindNodes(t *testing.T) {
 			{Key: "Country", F: FilterEQ(c)},
 		}
 		ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
-		g.Expect(ns).NotTo(HaveLen(0))
+		require.NotEmpty(t, ns)
 		for _, n := range ns {
-			g.Expect(nodesByLoc[c]).To(ContainElement(n))
+			require.Contains(t, nodesByLoc[c], n)
 		}
 	}
 
@@ -922,11 +894,11 @@ func TestBucket_FindNodes(t *testing.T) {
 		{Key: "Location", F: FilterEQ("Asia")},
 	}
 	ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
-	g.Expect(ns).NotTo(HaveLen(0))
+	require.NotEmpty(t, ns)
 
 	ss[1].Count = 4
 	ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
-	g.Expect(ns).To(HaveLen(0))
+	require.Len(t, ns, 0)
 
 	// check with NotIn filter
 	ss = []Select{
@@ -936,9 +908,9 @@ func TestBucket_FindNodes(t *testing.T) {
 		{Key: "Location", F: FilterNotIn("Asia", "Europe")},
 	}
 	ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
-	g.Expect(ns).NotTo(HaveLen(0))
+	require.NotEmpty(t, ns)
 	for _, n := range ns {
-		g.Expect(nodesByLoc["NorthAmerica"]).To(ContainElement(n))
+		require.Contains(t, nodesByLoc["NorthAmerica"], n)
 	}
 
 	// check with 2 successive filters
@@ -951,14 +923,14 @@ func TestBucket_FindNodes(t *testing.T) {
 		{Key: "Country", F: FilterNotIn("USA", "Canada", "Mexico")},
 	}
 	ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
-	g.Expect(ns).To(HaveLen(0))
+	require.Len(t, ns, 0)
 
 	ss = []Select{
 		{Key: "Location", Count: 2},
 		{Key: NodesBucket, Count: 3},
 	}
 	ns = root.FindNodes(nil, SFGroup{Selectors: ss})
-	g.Expect(ns).To(HaveLen(6))
+	require.Len(t, ns, 6)
 
 	ss = []Select{
 		{Key: "Location", Count: 1},
@@ -968,9 +940,9 @@ func TestBucket_FindNodes(t *testing.T) {
 		{Key: "Location", F: FilterEQ("Europe")},
 	}
 	ns = root.FindNodes(nil, SFGroup{Selectors: ss, Filters: fs})
-	g.Expect(ns).To(HaveLen(6))
+	require.Len(t, ns, 6)
 	for _, n := range ns {
-		g.Expect(nodesByLoc["Europe"]).To(ContainElement(n))
+		require.Contains(t, nodesByLoc["Europe"], n)
 	}
 
 	// consistency test
@@ -982,11 +954,11 @@ func TestBucket_FindNodes(t *testing.T) {
 		{Key: "Location", F: FilterIn("Asia", "Europe")},
 	}
 	ns = root.FindNodes(defaultPivot, SFGroup{Selectors: ss, Filters: fs})
-	g.Expect(ns).To(HaveLen(3))
+	require.Len(t, ns, 3)
 
 	nscopy := root.FindNodes(defaultPivot, SFGroup{Selectors: ss})
-	g.Expect(nscopy).To(HaveLen(3))
-	g.Expect(ns).To(BeEquivalentTo(nscopy))
+	require.Len(t, nscopy, 3)
+	require.Equal(t, ns, nscopy)
 }
 
 func TestBucket_NewOption(t *testing.T) {
@@ -996,18 +968,16 @@ func TestBucket_NewOption(t *testing.T) {
 		err           error
 	)
 
-	g := NewGomegaWithT(t)
-
 	before = Bucket{}
 	err = before.AddBucket("/a:b/c:d", nil)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	data, err = before.MarshalBinary()
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 	err = after.UnmarshalBinary(data)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
-	g.Expect(before).To(Equal(after))
+	require.Equal(t, before, after)
 }
 
 func TestBucket_MarshalBinaryStress(t *testing.T) {
@@ -1017,21 +987,18 @@ func TestBucket_MarshalBinaryStress(t *testing.T) {
 		s             string
 	)
 
-	g := NewGomegaWithT(t)
-
 	before, _ = newRoot()
 	for i := uint32(1); i < 1000; i++ {
 		s += fmt.Sprintf("/k%d:v%d", i, i)
 		err := before.AddBucket(s, Nodes{{N: i}})
-		g.Expect(err).NotTo(HaveOccurred())
+		require.NoError(t, err)
 	}
 
 	data, err := before.MarshalBinary()
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 	err = after.UnmarshalBinary(data)
-	g.Expect(err).NotTo(HaveOccurred())
-
-	g.Expect(before).To(Equal(after))
+	require.NoError(t, err)
+	require.Equal(t, before, after)
 }
 
 func Benchmark_MarshalStress(b *testing.B) {
@@ -1040,13 +1007,11 @@ func Benchmark_MarshalStress(b *testing.B) {
 		s             string
 	)
 
-	g := NewGomegaWithT(b)
-
 	before, _ = newRoot()
 	for i := uint32(1); i < 1000; i++ {
 		s += fmt.Sprintf("/k%d:v%d", i, i)
 		err := before.AddBucket(s, Nodes{{N: i}})
-		g.Expect(err).NotTo(HaveOccurred())
+		require.NoError(b, err)
 	}
 
 	b.ReportAllocs()
@@ -1075,22 +1040,21 @@ func TestBucket_BigMap(t *testing.T) {
 		ss []Select
 		ff []Filter
 	)
-	g := NewGomegaWithT(t)
 
 	root, _ := newRoot()
 
 	templateTrust := "/Trust:0."
 	templateStorage := "/Storage:"
 
-	maxtotal := locLim * countryLim * cityLim * dcLim * nLim
-	storagessd := make(Nodes, 0, maxtotal)
-	storagemem := make(Nodes, 0, maxtotal)
-	storagetape := make(Nodes, 0, maxtotal)
-	trust9 := make(Nodes, 0, maxtotal)
-	trust8 := make(Nodes, 0, maxtotal)
-	trust7 := make(Nodes, 0, maxtotal)
-	trust6 := make(Nodes, 0, maxtotal)
-	trust5 := make(Nodes, 0, maxtotal)
+	maxTotal := locLim * countryLim * cityLim * dcLim * nLim
+	storageSSD := make(Nodes, 0, maxTotal)
+	storageMem := make(Nodes, 0, maxTotal)
+	storageTape := make(Nodes, 0, maxTotal)
+	trust9 := make(Nodes, 0, maxTotal)
+	trust8 := make(Nodes, 0, maxTotal)
+	trust7 := make(Nodes, 0, maxTotal)
+	trust6 := make(Nodes, 0, maxTotal)
+	trust5 := make(Nodes, 0, maxTotal)
 
 	start := time.Now()
 	for loc = 0; loc < locLim; loc++ {
@@ -1110,11 +1074,11 @@ func TestBucket_BigMap(t *testing.T) {
 						total++
 						switch total % 3 {
 						case 0:
-							storagessd = append(storagessd, Node{N: total})
+							storageSSD = append(storageSSD, Node{N: total})
 						case 1:
-							storagemem = append(storagemem, Node{N: total})
+							storageMem = append(storageMem, Node{N: total})
 						case 2:
-							storagetape = append(storagetape, Node{N: total})
+							storageTape = append(storageTape, Node{N: total})
 						}
 
 						switch total % 5 {
@@ -1131,7 +1095,7 @@ func TestBucket_BigMap(t *testing.T) {
 						}
 					}
 					err = cityB.AddBucket("/DC:"+dcStr, ns)
-					g.Expect(err).NotTo(HaveOccurred())
+					require.NoError(t, err)
 				}
 				cityB.Key = "City"
 				cityB.Value = ciStr
@@ -1145,38 +1109,38 @@ func TestBucket_BigMap(t *testing.T) {
 		loB.Value = loStr
 		root.AddChild(loB)
 	}
-	err = root.AddBucket(templateStorage+"SSD", storagessd)
-	g.Expect(err).NotTo(HaveOccurred())
-	err = root.AddBucket(templateStorage+"MEM", storagemem)
-	g.Expect(err).NotTo(HaveOccurred())
-	err = root.AddBucket(templateStorage+"TAPE", storagetape)
-	g.Expect(err).NotTo(HaveOccurred())
+	err = root.AddBucket(templateStorage+"SSD", storageSSD)
+	require.NoError(t, err)
+	err = root.AddBucket(templateStorage+"MEM", storageMem)
+	require.NoError(t, err)
+	err = root.AddBucket(templateStorage+"TAPE", storageTape)
+	require.NoError(t, err)
 
 	err = root.AddBucket(templateTrust+"9", trust9)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 	err = root.AddBucket(templateTrust+"8", trust8)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 	err = root.AddBucket(templateTrust+"7", trust7)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 	err = root.AddBucket(templateTrust+"6", trust6)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 	err = root.AddBucket(templateTrust+"5", trust5)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
-	fmt.Println("Map creation time:\t", time.Since(start))
+	t.Logf("Map creation time:\t%s", time.Since(start))
 
 	start = time.Now()
 	root.Copy()
-	fmt.Println("Map copy time:\t", time.Since(start))
+	t.Logf("Map copy time:\t%s", time.Since(start))
 
 	graph, err := root.MarshalBinary()
-	g.Expect(err).NotTo(HaveOccurred())
-	g.Expect(len(root.children)).To(Equal(locLim + 8))
+	require.NoError(t, err)
+	require.Len(t, root.children, locLim+8)
 
 	newgraph, _ := newRoot()
 	err = newgraph.UnmarshalBinary(graph)
-	g.Expect(err).NotTo(HaveOccurred())
-	g.Expect(len(newgraph.children)).To(Equal(locLim + 8))
+	require.NoError(t, err)
+	require.Len(t, newgraph.children, locLim+8)
 
 	ss = []Select{
 		{Key: "Loc", Count: 1},
@@ -1193,12 +1157,12 @@ func TestBucket_BigMap(t *testing.T) {
 
 	start = time.Now()
 	r := root.GetMaxSelection(SFGroup{Selectors: ss, Filters: ff})
-	g.Expect(r).NotTo(BeNil())
+	require.NotNil(t, r)
 	z := r.GetSelection(ss, defaultPivot)
 	nodes := z.Nodelist()
-	fmt.Println("Traverse time:\t\t", time.Since(start))
-	g.Expect(len(nodes)).To(Equal(20))
+	require.Len(t, nodes, 20)
 
+	t.Logf("Traverse time:\t\t%s", time.Since(start))
 	var testcont Nodes
 	for _, b := range root.children {
 		if b.Key == "Storage" && b.Value == "SSD" {
@@ -1206,7 +1170,7 @@ func TestBucket_BigMap(t *testing.T) {
 		}
 	}
 	for _, node := range nodes {
-		g.Expect(testcont).To(ContainElement(node))
+		require.Contains(t, testcont, node)
 	}
 
 	for _, b := range root.children {
@@ -1215,9 +1179,9 @@ func TestBucket_BigMap(t *testing.T) {
 		}
 	}
 	for _, node := range nodes {
-		g.Expect(testcont).To(ContainElement(node))
+		require.Contains(t, testcont, node)
 	}
-	fmt.Println("Graph size: ", len(graph), " bytes")
+	t.Logf("Graph size: %d bytes", len(graph))
 }
 
 func TestBucket_ShuffledSelection(t *testing.T) {
@@ -1229,7 +1193,6 @@ func TestBucket_ShuffledSelection(t *testing.T) {
 		shuffledBuckets []bucket
 		ss              []Select
 	)
-	g := NewGomegaWithT(t)
 
 	buckets = []bucket{
 		{"/Location:Asia/Country:Korea", []uint32{1, 3}},
@@ -1253,16 +1216,16 @@ func TestBucket_ShuffledSelection(t *testing.T) {
 	})
 
 	exp, err = newRoot(buckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	root, err = newRoot(shuffledBuckets...)
-	g.Expect(err).NotTo(HaveOccurred())
+	require.NoError(t, err)
 
 	expr = exp.GetSelection(ss, defaultPivot)
-	g.Expect(expr).NotTo(BeNil())
+	require.NotNil(t, expr)
 
 	r = root.GetSelection(ss, defaultPivot)
-	g.Expect(r).NotTo(BeNil())
+	require.NotNil(t, r)
 
-	g.Expect(r.nodes).To(Equal(expr.nodes))
+	require.Equal(t, r.nodes, expr.nodes)
 }
