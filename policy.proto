@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+package netmap;
+
+// Node type represents single graph leaf with index N and weight W.
+message Node {
+    uint32 N = 1;
+    uint64 C = 2;
+    uint64 P = 3;
+}
+
+// Bucket represents network map as graph.
+message Bucket {
+    string Key               = 1;
+    string Value             = 2;
+    repeated Node Nodes      = 3 [(gogoproto.nullable) = false, (gogoproto.customname) = "nodes"];
+    repeated Bucket Children = 4 [(gogoproto.nullable) = false, (gogoproto.customname) = "children"];
+}

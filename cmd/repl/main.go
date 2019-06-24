@@ -141,11 +141,11 @@ func read(b *netmap.Bucket, name string) error {
 	if err != nil {
 		return err
 	}
-	return b.UnmarshalBinary(data)
+	return b.Unmarshal(data)
 }
 
 func write(b *netmap.Bucket, name string) error {
-	data, err := b.MarshalBinary()
+	data, err := b.Marshal()
 	if err != nil {
 		return err
 	}
@@ -161,7 +161,7 @@ func getSelection(c *ishell.Context) {
 			return
 		}
 	}
-	c.Println(nil)
+	c.Println()
 }
 
 func clearSelection(c *ishell.Context) {

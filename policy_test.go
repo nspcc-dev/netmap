@@ -600,9 +600,9 @@ func TestBucket_MarshalBinary(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	data, err = before.MarshalBinary()
+	data, err = before.Marshal()
 	require.NoError(t, err)
-	err = after.UnmarshalBinary(data)
+	err = after.Unmarshal(data)
 	require.NoError(t, err)
 	require.Equal(t, before, after)
 }
@@ -972,9 +972,9 @@ func TestBucket_NewOption(t *testing.T) {
 	err = before.AddBucket("/a:b/c:d", nil)
 	require.NoError(t, err)
 
-	data, err = before.MarshalBinary()
+	data, err = before.Marshal()
 	require.NoError(t, err)
-	err = after.UnmarshalBinary(data)
+	err = after.Unmarshal(data)
 	require.NoError(t, err)
 
 	require.Equal(t, before, after)
@@ -994,9 +994,9 @@ func TestBucket_MarshalBinaryStress(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	data, err := before.MarshalBinary()
+	data, err := before.Marshal()
 	require.NoError(t, err)
-	err = after.UnmarshalBinary(data)
+	err = after.Unmarshal(data)
 	require.NoError(t, err)
 	require.Equal(t, before, after)
 }
@@ -1018,8 +1018,8 @@ func Benchmark_MarshalStress(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		data, _ := before.MarshalBinary()
-		err := after.UnmarshalBinary(data)
+		data, _ := before.Marshal()
+		err := after.Unmarshal(data)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -1133,12 +1133,12 @@ func TestBucket_BigMap(t *testing.T) {
 	root.Copy()
 	t.Logf("Map copy time:\t%s", time.Since(start))
 
-	graph, err := root.MarshalBinary()
+	graph, err := root.Marshal()
 	require.NoError(t, err)
 	require.Len(t, root.children, locLim+8)
 
 	newgraph, _ := newRoot()
-	err = newgraph.UnmarshalBinary(graph)
+	err = newgraph.Unmarshal(graph)
 	require.NoError(t, err)
 	require.Len(t, newgraph.children, locLim+8)
 

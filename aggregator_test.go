@@ -14,8 +14,8 @@ const (
 )
 
 func initTestBucket(t *testing.T, b *Bucket) {
-	require.Nil(t, b.AddBucket("/opt:first", Nodes{{0, 1, 2}, {2, 3, 2}}))
-	require.Nil(t, b.AddBucket("/opt:second/sub:1", Nodes{{1, 2, 3}, {10, 6, 1}}))
+	require.Nil(t, b.AddBucket("/opt:first", Nodes{{N: 0, C: 1, P: 2}, {N: 2, C: 3, P: 2}}))
+	require.Nil(t, b.AddBucket("/opt:second/sub:1", Nodes{{N: 1, C: 2, P: 3}, {N: 10, C: 6, P: 1}}))
 
 	b.fillNodes()
 }
@@ -37,10 +37,10 @@ func TestNewWeightFunc(t *testing.T) {
 	copy(nodes, b.nodes)
 
 	expected := Nodes{
-		{10, 6, 1},
-		{2, 3, 2},
-		{1, 2, 3},
-		{0, 1, 2},
+		{N: 10, C: 6, P: 1},
+		{N: 2, C: 3, P: 2},
+		{N: 1, C: 2, P: 3},
+		{N: 0, C: 1, P: 2},
 	}
 
 	sort.Slice(nodes, func(i, j int) bool { return wf(nodes[i]) > wf(nodes[j]) })

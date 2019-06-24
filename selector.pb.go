@@ -3,13 +3,12 @@
 
 package netmap
 
-import (
-	fmt "fmt"
-	_ "github.com/gogo/protobuf/gogoproto"
-	proto "github.com/golang/protobuf/proto"
-	io "io"
-	math "math"
-)
+import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
+import _ "github.com/gogo/protobuf/gogoproto"
+
+import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -47,7 +46,6 @@ var Operation_name = map[int32]string{
 	7: "OR",
 	8: "AND",
 }
-
 var Operation_value = map[string]int32{
 	"NP":  0,
 	"EQ":  1,
@@ -63,9 +61,8 @@ var Operation_value = map[string]int32{
 func (x Operation) String() string {
 	return proto.EnumName(Operation_name, int32(x))
 }
-
 func (Operation) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_e4729c7385e2dd96, []int{0}
+	return fileDescriptor_selector_b85c7037d716412c, []int{0}
 }
 
 type Type int32
@@ -79,7 +76,6 @@ var Type_name = map[int32]string{
 	0: "String",
 	1: "Integer",
 }
-
 var Type_value = map[string]int32{
 	"String":  0,
 	"Integer": 1,
@@ -88,9 +84,8 @@ var Type_value = map[string]int32{
 func (x Type) String() string {
 	return proto.EnumName(Type_name, int32(x))
 }
-
 func (Type) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_e4729c7385e2dd96, []int{1}
+	return fileDescriptor_selector_b85c7037d716412c, []int{1}
 }
 
 type PlacementRule struct {
@@ -105,7 +100,7 @@ func (m *PlacementRule) Reset()         { *m = PlacementRule{} }
 func (m *PlacementRule) String() string { return proto.CompactTextString(m) }
 func (*PlacementRule) ProtoMessage()    {}
 func (*PlacementRule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e4729c7385e2dd96, []int{0}
+	return fileDescriptor_selector_b85c7037d716412c, []int{0}
 }
 func (m *PlacementRule) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -122,8 +117,8 @@ func (m *PlacementRule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-func (m *PlacementRule) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PlacementRule.Merge(m, src)
+func (dst *PlacementRule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PlacementRule.Merge(dst, src)
 }
 func (m *PlacementRule) XXX_Size() int {
 	return m.Size()
@@ -161,7 +156,7 @@ func (m *SFGroup) Reset()         { *m = SFGroup{} }
 func (m *SFGroup) String() string { return proto.CompactTextString(m) }
 func (*SFGroup) ProtoMessage()    {}
 func (*SFGroup) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e4729c7385e2dd96, []int{1}
+	return fileDescriptor_selector_b85c7037d716412c, []int{1}
 }
 func (m *SFGroup) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -178,8 +173,8 @@ func (m *SFGroup) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *SFGroup) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SFGroup.Merge(m, src)
+func (dst *SFGroup) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SFGroup.Merge(dst, src)
 }
 func (m *SFGroup) XXX_Size() int {
 	return m.Size()
@@ -223,7 +218,7 @@ func (m *Select) Reset()         { *m = Select{} }
 func (m *Select) String() string { return proto.CompactTextString(m) }
 func (*Select) ProtoMessage()    {}
 func (*Select) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e4729c7385e2dd96, []int{2}
+	return fileDescriptor_selector_b85c7037d716412c, []int{2}
 }
 func (m *Select) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -240,8 +235,8 @@ func (m *Select) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *Select) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Select.Merge(m, src)
+func (dst *Select) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Select.Merge(dst, src)
 }
 func (m *Select) XXX_Size() int {
 	return m.Size()
@@ -277,7 +272,7 @@ func (m *SimpleFilters) Reset()         { *m = SimpleFilters{} }
 func (m *SimpleFilters) String() string { return proto.CompactTextString(m) }
 func (*SimpleFilters) ProtoMessage()    {}
 func (*SimpleFilters) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e4729c7385e2dd96, []int{3}
+	return fileDescriptor_selector_b85c7037d716412c, []int{3}
 }
 func (m *SimpleFilters) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -294,8 +289,8 @@ func (m *SimpleFilters) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-func (m *SimpleFilters) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SimpleFilters.Merge(m, src)
+func (dst *SimpleFilters) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SimpleFilters.Merge(dst, src)
 }
 func (m *SimpleFilters) XXX_Size() int {
 	return m.Size()
@@ -328,7 +323,7 @@ func (m *SimpleFilter) Reset()         { *m = SimpleFilter{} }
 func (m *SimpleFilter) String() string { return proto.CompactTextString(m) }
 func (*SimpleFilter) ProtoMessage()    {}
 func (*SimpleFilter) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e4729c7385e2dd96, []int{4}
+	return fileDescriptor_selector_b85c7037d716412c, []int{4}
 }
 func (m *SimpleFilter) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -345,8 +340,8 @@ func (m *SimpleFilter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return b[:n], nil
 	}
 }
-func (m *SimpleFilter) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SimpleFilter.Merge(m, src)
+func (dst *SimpleFilter) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SimpleFilter.Merge(dst, src)
 }
 func (m *SimpleFilter) XXX_Size() int {
 	return m.Size()
@@ -483,7 +478,7 @@ func (m *Filter) Reset()         { *m = Filter{} }
 func (m *Filter) String() string { return proto.CompactTextString(m) }
 func (*Filter) ProtoMessage()    {}
 func (*Filter) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e4729c7385e2dd96, []int{5}
+	return fileDescriptor_selector_b85c7037d716412c, []int{5}
 }
 func (m *Filter) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -500,8 +495,8 @@ func (m *Filter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *Filter) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Filter.Merge(m, src)
+func (dst *Filter) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Filter.Merge(dst, src)
 }
 func (m *Filter) XXX_Size() int {
 	return m.Size()
@@ -527,51 +522,15 @@ func (m *Filter) GetF() *SimpleFilter {
 }
 
 func init() {
-	proto.RegisterEnum("netmap.Operation", Operation_name, Operation_value)
-	proto.RegisterEnum("netmap.Type", Type_name, Type_value)
 	proto.RegisterType((*PlacementRule)(nil), "netmap.PlacementRule")
 	proto.RegisterType((*SFGroup)(nil), "netmap.SFGroup")
 	proto.RegisterType((*Select)(nil), "netmap.Select")
 	proto.RegisterType((*SimpleFilters)(nil), "netmap.SimpleFilters")
 	proto.RegisterType((*SimpleFilter)(nil), "netmap.SimpleFilter")
 	proto.RegisterType((*Filter)(nil), "netmap.Filter")
+	proto.RegisterEnum("netmap.Operation", Operation_name, Operation_value)
+	proto.RegisterEnum("netmap.Type", Type_name, Type_value)
 }
-
-func init() { proto.RegisterFile("selector.proto", fileDescriptor_e4729c7385e2dd96) }
-
-var fileDescriptor_e4729c7385e2dd96 = []byte{
-	// 464 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x52, 0xcd, 0x6e, 0xd3, 0x40,
-	0x18, 0xf4, 0xda, 0x89, 0xdd, 0x7c, 0x21, 0x61, 0x59, 0x15, 0x64, 0x71, 0x70, 0x8d, 0x4f, 0x56,
-	0xa5, 0xba, 0x10, 0x38, 0x23, 0x35, 0x60, 0x17, 0x04, 0x6a, 0xca, 0x26, 0xe2, 0xee, 0x84, 0xc5,
-	0x58, 0x72, 0xbc, 0x2b, 0x7b, 0x2d, 0xd1, 0x1b, 0x37, 0x5e, 0x81, 0x47, 0xea, 0x91, 0x27, 0x40,
-	0x28, 0xbc, 0x08, 0xf2, 0xfa, 0x87, 0x28, 0xa2, 0xa7, 0xf1, 0x7c, 0xdf, 0xcc, 0xce, 0x37, 0x92,
-	0x61, 0x5a, 0xb2, 0x8c, 0x6d, 0x24, 0x2f, 0x02, 0x51, 0x70, 0xc9, 0x89, 0x99, 0x33, 0xb9, 0x8d,
-	0xc5, 0xe3, 0xb3, 0x24, 0x95, 0x5f, 0xaa, 0x75, 0xb0, 0xe1, 0xdb, 0xf3, 0x84, 0x27, 0xfc, 0x5c,
-	0xad, 0xd7, 0xd5, 0x67, 0xc5, 0x14, 0x51, 0x5f, 0x8d, 0xcd, 0x5b, 0xc3, 0xe4, 0x3a, 0x8b, 0x37,
-	0x6c, 0xcb, 0x72, 0x49, 0xab, 0x8c, 0x11, 0x07, 0x80, 0x32, 0x91, 0x45, 0x71, 0xfd, 0xb6, 0x8d,
-	0x5c, 0xe4, 0x4f, 0xe8, 0xde, 0x84, 0x3c, 0x83, 0xa3, 0x65, 0x74, 0x59, 0xf0, 0x4a, 0x94, 0xb6,
-	0xee, 0x1a, 0xfe, 0x78, 0x76, 0x3f, 0x68, 0xa2, 0x83, 0x76, 0x3e, 0x1f, 0xdc, 0xfe, 0x3a, 0xd1,
-	0x68, 0x2f, 0xf3, 0xbe, 0x23, 0xb0, 0x5a, 0x42, 0x02, 0xb0, 0xa2, 0x34, 0x93, 0xac, 0x28, 0x6d,
-	0xa4, 0xdc, 0xd3, 0xce, 0xdd, 0x8c, 0x5b, 0x73, 0x27, 0x22, 0x33, 0x18, 0x2d, 0xdb, 0xa2, 0x5d,
-	0x5e, 0xef, 0x68, 0x16, 0xad, 0xe3, 0x9f, 0x8c, 0xd8, 0x60, 0x85, 0x5f, 0x37, 0x59, 0xf5, 0x89,
-	0xd9, 0x86, 0x6b, 0xf8, 0x13, 0xda, 0x51, 0xef, 0x29, 0x98, 0x8d, 0x8c, 0x1c, 0xc3, 0xf0, 0x15,
-	0xaf, 0x72, 0xd9, 0x36, 0x6c, 0x08, 0xc1, 0x60, 0xbc, 0x63, 0x37, 0xb6, 0xee, 0x22, 0x7f, 0x44,
-	0xeb, 0x4f, 0x2f, 0x84, 0xc9, 0x32, 0xdd, 0x8a, 0x8c, 0x75, 0x07, 0xbd, 0x38, 0x2c, 0x70, 0xdc,
-	0x9f, 0xb3, 0xa7, 0x3b, 0xa8, 0xe1, 0x7d, 0x43, 0x70, 0x6f, 0x7f, 0x4f, 0x9e, 0x80, 0xbe, 0x10,
-	0x2a, 0x7c, 0x3a, 0x7b, 0xd0, 0xbd, 0xb0, 0x10, 0xac, 0x88, 0x65, 0xca, 0x73, 0xaa, 0x2f, 0x04,
-	0x79, 0x04, 0xc3, 0x8f, 0x71, 0x56, 0xb1, 0xe6, 0x9c, 0x37, 0x1a, 0x6d, 0x28, 0x39, 0x83, 0x61,
-	0x74, 0x51, 0x24, 0xa5, 0x6d, 0xb8, 0xc8, 0x1f, 0xcf, 0x1e, 0xfe, 0x2f, 0xbf, 0xac, 0xe5, 0x4a,
-	0x35, 0x37, 0x61, 0x50, 0xa3, 0xf7, 0x12, 0xcc, 0x36, 0xbb, 0x6d, 0x89, 0xfa, 0x96, 0xc4, 0x03,
-	0x14, 0xa9, 0x98, 0x3b, 0xea, 0x50, 0x14, 0x9d, 0xae, 0x60, 0xd4, 0xdf, 0x47, 0x4c, 0xd0, 0xaf,
-	0xae, 0xb1, 0x56, 0x63, 0xf8, 0x01, 0x23, 0xc5, 0x43, 0xac, 0xd7, 0x78, 0xb9, 0xc2, 0x86, 0xc2,
-	0x10, 0x0f, 0x6a, 0x7c, 0xbf, 0xc2, 0x43, 0x85, 0x21, 0x36, 0x6b, 0x5c, 0x50, 0x6c, 0x11, 0x0b,
-	0x8c, 0x8b, 0xab, 0xd7, 0xf8, 0xe8, 0xf4, 0x04, 0x06, 0xab, 0x1b, 0xc1, 0x08, 0x80, 0xb9, 0x94,
-	0x45, 0x9a, 0x27, 0x58, 0x23, 0x63, 0xb0, 0xde, 0xe6, 0x92, 0x25, 0xac, 0xc0, 0x68, 0x8e, 0x6f,
-	0x77, 0x0e, 0xfa, 0xb9, 0x73, 0xd0, 0xef, 0x9d, 0x83, 0x7e, 0xfc, 0x71, 0xb4, 0xb5, 0xa9, 0xfe,
-	0xdc, 0xe7, 0x7f, 0x03, 0x00, 0x00, 0xff, 0xff, 0xe7, 0x59, 0x33, 0x15, 0x02, 0x03, 0x00, 0x00,
-}
-
 func (m *PlacementRule) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -758,9 +717,9 @@ func (m *SimpleFilter) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintSelector(dAtA, i, uint64(m.Op))
 	}
 	if m.Args != nil {
-		nn3, err3 := m.Args.MarshalTo(dAtA[i:])
-		if err3 != nil {
-			return 0, err3
+		nn3, err := m.Args.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += nn3
 	}
@@ -784,9 +743,9 @@ func (m *SimpleFilter_FArgs) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x1a
 		i++
 		i = encodeVarintSelector(dAtA, i, uint64(m.FArgs.Size()))
-		n4, err4 := m.FArgs.MarshalTo(dAtA[i:])
-		if err4 != nil {
-			return 0, err4
+		n4, err := m.FArgs.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n4
 	}
@@ -817,9 +776,9 @@ func (m *Filter) MarshalTo(dAtA []byte) (int, error) {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintSelector(dAtA, i, uint64(m.F.Size()))
-		n5, err5 := m.F.MarshalTo(dAtA[i:])
-		if err5 != nil {
-			return 0, err5
+		n5, err := m.F.MarshalTo(dAtA[i:])
+		if err != nil {
+			return 0, err
 		}
 		i += n5
 	}
@@ -1015,7 +974,7 @@ func (m *PlacementRule) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -1043,7 +1002,7 @@ func (m *PlacementRule) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.ReplFactor |= uint32(b&0x7F) << shift
+				m.ReplFactor |= (uint32(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1062,7 +1021,7 @@ func (m *PlacementRule) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1071,9 +1030,6 @@ func (m *PlacementRule) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthSelector
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthSelector
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -1089,9 +1045,6 @@ func (m *PlacementRule) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthSelector
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthSelector
 			}
 			if (iNdEx + skippy) > l {
@@ -1122,7 +1075,7 @@ func (m *SFGroup) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -1150,7 +1103,7 @@ func (m *SFGroup) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1159,9 +1112,6 @@ func (m *SFGroup) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthSelector
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthSelector
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -1184,7 +1134,7 @@ func (m *SFGroup) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1193,9 +1143,6 @@ func (m *SFGroup) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthSelector
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthSelector
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -1216,7 +1163,7 @@ func (m *SFGroup) Unmarshal(dAtA []byte) error {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					v |= uint32(b&0x7F) << shift
+					v |= (uint32(b) & 0x7F) << shift
 					if b < 0x80 {
 						break
 					}
@@ -1233,7 +1180,7 @@ func (m *SFGroup) Unmarshal(dAtA []byte) error {
 					}
 					b := dAtA[iNdEx]
 					iNdEx++
-					packedLen |= int(b&0x7F) << shift
+					packedLen |= (int(b) & 0x7F) << shift
 					if b < 0x80 {
 						break
 					}
@@ -1242,15 +1189,12 @@ func (m *SFGroup) Unmarshal(dAtA []byte) error {
 					return ErrInvalidLengthSelector
 				}
 				postIndex := iNdEx + packedLen
-				if postIndex < 0 {
-					return ErrInvalidLengthSelector
-				}
 				if postIndex > l {
 					return io.ErrUnexpectedEOF
 				}
 				var elementCount int
 				var count int
-				for _, integer := range dAtA[iNdEx:postIndex] {
+				for _, integer := range dAtA {
 					if integer < 128 {
 						count++
 					}
@@ -1270,7 +1214,7 @@ func (m *SFGroup) Unmarshal(dAtA []byte) error {
 						}
 						b := dAtA[iNdEx]
 						iNdEx++
-						v |= uint32(b&0x7F) << shift
+						v |= (uint32(b) & 0x7F) << shift
 						if b < 0x80 {
 							break
 						}
@@ -1287,9 +1231,6 @@ func (m *SFGroup) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthSelector
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthSelector
 			}
 			if (iNdEx + skippy) > l {
@@ -1320,7 +1261,7 @@ func (m *Select) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -1348,7 +1289,7 @@ func (m *Select) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Count |= uint32(b&0x7F) << shift
+				m.Count |= (uint32(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1367,7 +1308,7 @@ func (m *Select) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				stringLen |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1377,9 +1318,6 @@ func (m *Select) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthSelector
 			}
 			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthSelector
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -1392,9 +1330,6 @@ func (m *Select) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthSelector
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthSelector
 			}
 			if (iNdEx + skippy) > l {
@@ -1425,7 +1360,7 @@ func (m *SimpleFilters) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -1453,7 +1388,7 @@ func (m *SimpleFilters) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1462,9 +1397,6 @@ func (m *SimpleFilters) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthSelector
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthSelector
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -1480,9 +1412,6 @@ func (m *SimpleFilters) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthSelector
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthSelector
 			}
 			if (iNdEx + skippy) > l {
@@ -1513,7 +1442,7 @@ func (m *SimpleFilter) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -1541,7 +1470,7 @@ func (m *SimpleFilter) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Op |= Operation(b&0x7F) << shift
+				m.Op |= (Operation(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1560,7 +1489,7 @@ func (m *SimpleFilter) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				stringLen |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1570,9 +1499,6 @@ func (m *SimpleFilter) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthSelector
 			}
 			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthSelector
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -1592,7 +1518,7 @@ func (m *SimpleFilter) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1601,9 +1527,6 @@ func (m *SimpleFilter) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthSelector
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthSelector
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -1620,9 +1543,6 @@ func (m *SimpleFilter) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthSelector
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthSelector
 			}
 			if (iNdEx + skippy) > l {
@@ -1653,7 +1573,7 @@ func (m *Filter) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= uint64(b&0x7F) << shift
+			wire |= (uint64(b) & 0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -1681,7 +1601,7 @@ func (m *Filter) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				stringLen |= (uint64(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1691,9 +1611,6 @@ func (m *Filter) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthSelector
 			}
 			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthSelector
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -1713,7 +1630,7 @@ func (m *Filter) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1722,9 +1639,6 @@ func (m *Filter) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthSelector
 			}
 			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthSelector
-			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -1742,9 +1656,6 @@ func (m *Filter) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
-				return ErrInvalidLengthSelector
-			}
-			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthSelector
 			}
 			if (iNdEx + skippy) > l {
@@ -1814,11 +1725,8 @@ func skipSelector(dAtA []byte) (n int, err error) {
 					break
 				}
 			}
-			if length < 0 {
-				return 0, ErrInvalidLengthSelector
-			}
 			iNdEx += length
-			if iNdEx < 0 {
+			if length < 0 {
 				return 0, ErrInvalidLengthSelector
 			}
 			return iNdEx, nil
@@ -1849,9 +1757,6 @@ func skipSelector(dAtA []byte) (n int, err error) {
 					return 0, err
 				}
 				iNdEx = start + next
-				if iNdEx < 0 {
-					return 0, ErrInvalidLengthSelector
-				}
 			}
 			return iNdEx, nil
 		case 4:
@@ -1870,3 +1775,38 @@ var (
 	ErrInvalidLengthSelector = fmt.Errorf("proto: negative length found during unmarshaling")
 	ErrIntOverflowSelector   = fmt.Errorf("proto: integer overflow")
 )
+
+func init() { proto.RegisterFile("selector.proto", fileDescriptor_selector_b85c7037d716412c) }
+
+var fileDescriptor_selector_b85c7037d716412c = []byte{
+	// 464 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x52, 0xcd, 0x6e, 0xd3, 0x40,
+	0x18, 0xf4, 0xda, 0x89, 0xdd, 0x7c, 0x21, 0x61, 0x59, 0x15, 0x64, 0x71, 0x70, 0x8d, 0x4f, 0x56,
+	0xa5, 0xba, 0x10, 0x38, 0x23, 0x35, 0x60, 0x17, 0x04, 0x6a, 0xca, 0x26, 0xe2, 0xee, 0x84, 0xc5,
+	0x58, 0x72, 0xbc, 0x2b, 0x7b, 0x2d, 0xd1, 0x1b, 0x37, 0x5e, 0x81, 0x47, 0xea, 0x91, 0x27, 0x40,
+	0x28, 0xbc, 0x08, 0xf2, 0xfa, 0x87, 0x28, 0xa2, 0xa7, 0xf1, 0x7c, 0xdf, 0xcc, 0xce, 0x37, 0x92,
+	0x61, 0x5a, 0xb2, 0x8c, 0x6d, 0x24, 0x2f, 0x02, 0x51, 0x70, 0xc9, 0x89, 0x99, 0x33, 0xb9, 0x8d,
+	0xc5, 0xe3, 0xb3, 0x24, 0x95, 0x5f, 0xaa, 0x75, 0xb0, 0xe1, 0xdb, 0xf3, 0x84, 0x27, 0xfc, 0x5c,
+	0xad, 0xd7, 0xd5, 0x67, 0xc5, 0x14, 0x51, 0x5f, 0x8d, 0xcd, 0x5b, 0xc3, 0xe4, 0x3a, 0x8b, 0x37,
+	0x6c, 0xcb, 0x72, 0x49, 0xab, 0x8c, 0x11, 0x07, 0x80, 0x32, 0x91, 0x45, 0x71, 0xfd, 0xb6, 0x8d,
+	0x5c, 0xe4, 0x4f, 0xe8, 0xde, 0x84, 0x3c, 0x83, 0xa3, 0x65, 0x74, 0x59, 0xf0, 0x4a, 0x94, 0xb6,
+	0xee, 0x1a, 0xfe, 0x78, 0x76, 0x3f, 0x68, 0xa2, 0x83, 0x76, 0x3e, 0x1f, 0xdc, 0xfe, 0x3a, 0xd1,
+	0x68, 0x2f, 0xf3, 0xbe, 0x23, 0xb0, 0x5a, 0x42, 0x02, 0xb0, 0xa2, 0x34, 0x93, 0xac, 0x28, 0x6d,
+	0xa4, 0xdc, 0xd3, 0xce, 0xdd, 0x8c, 0x5b, 0x73, 0x27, 0x22, 0x33, 0x18, 0x2d, 0xdb, 0xa2, 0x5d,
+	0x5e, 0xef, 0x68, 0x16, 0xad, 0xe3, 0x9f, 0x8c, 0xd8, 0x60, 0x85, 0x5f, 0x37, 0x59, 0xf5, 0x89,
+	0xd9, 0x86, 0x6b, 0xf8, 0x13, 0xda, 0x51, 0xef, 0x29, 0x98, 0x8d, 0x8c, 0x1c, 0xc3, 0xf0, 0x15,
+	0xaf, 0x72, 0xd9, 0x36, 0x6c, 0x08, 0xc1, 0x60, 0xbc, 0x63, 0x37, 0xb6, 0xee, 0x22, 0x7f, 0x44,
+	0xeb, 0x4f, 0x2f, 0x84, 0xc9, 0x32, 0xdd, 0x8a, 0x8c, 0x75, 0x07, 0xbd, 0x38, 0x2c, 0x70, 0xdc,
+	0x9f, 0xb3, 0xa7, 0x3b, 0xa8, 0xe1, 0x7d, 0x43, 0x70, 0x6f, 0x7f, 0x4f, 0x9e, 0x80, 0xbe, 0x10,
+	0x2a, 0x7c, 0x3a, 0x7b, 0xd0, 0xbd, 0xb0, 0x10, 0xac, 0x88, 0x65, 0xca, 0x73, 0xaa, 0x2f, 0x04,
+	0x79, 0x04, 0xc3, 0x8f, 0x71, 0x56, 0xb1, 0xe6, 0x9c, 0x37, 0x1a, 0x6d, 0x28, 0x39, 0x83, 0x61,
+	0x74, 0x51, 0x24, 0xa5, 0x6d, 0xb8, 0xc8, 0x1f, 0xcf, 0x1e, 0xfe, 0x2f, 0xbf, 0xac, 0xe5, 0x4a,
+	0x35, 0x37, 0x61, 0x50, 0xa3, 0xf7, 0x12, 0xcc, 0x36, 0xbb, 0x6d, 0x89, 0xfa, 0x96, 0xc4, 0x03,
+	0x14, 0xa9, 0x98, 0x3b, 0xea, 0x50, 0x14, 0x9d, 0xae, 0x60, 0xd4, 0xdf, 0x47, 0x4c, 0xd0, 0xaf,
+	0xae, 0xb1, 0x56, 0x63, 0xf8, 0x01, 0x23, 0xc5, 0x43, 0xac, 0xd7, 0x78, 0xb9, 0xc2, 0x86, 0xc2,
+	0x10, 0x0f, 0x6a, 0x7c, 0xbf, 0xc2, 0x43, 0x85, 0x21, 0x36, 0x6b, 0x5c, 0x50, 0x6c, 0x11, 0x0b,
+	0x8c, 0x8b, 0xab, 0xd7, 0xf8, 0xe8, 0xf4, 0x04, 0x06, 0xab, 0x1b, 0xc1, 0x08, 0x80, 0xb9, 0x94,
+	0x45, 0x9a, 0x27, 0x58, 0x23, 0x63, 0xb0, 0xde, 0xe6, 0x92, 0x25, 0xac, 0xc0, 0x68, 0x8e, 0x6f,
+	0x77, 0x0e, 0xfa, 0xb9, 0x73, 0xd0, 0xef, 0x9d, 0x83, 0x7e, 0xfc, 0x71, 0xb4, 0xb5, 0xa9, 0xfe,
+	0xdc, 0xe7, 0x7f, 0x03, 0x00, 0x00, 0xff, 0xff, 0xe7, 0x59, 0x33, 0x15, 0x02, 0x03, 0x00, 0x00,
+}

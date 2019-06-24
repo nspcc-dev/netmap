@@ -1,12 +1,13 @@
 package netmap
 
 import (
-	"bytes"
 	"encoding/binary"
 	"io"
 	"sort"
+	"strconv"
 	"strings"
 
+	rw "github.com/gogo/protobuf/io"
 	"github.com/nspcc-dev/hrw"
 	"github.com/pkg/errors"
 )
@@ -25,21 +26,6 @@ type (
 		Size       int64
 		ReplFactor int
 		NodeCount  int
-	}
-
-	// Bucket represents netmap as graph.
-	Bucket struct {
-		Key      string
-		Value    string
-		nodes    Nodes
-		children []Bucket
-	}
-
-	// Node type represents single graph leaf with index N, capacity C and price P.
-	Node struct {
-		N uint32
-		C uint64
-		P uint64
 	}
 
 	// Nodes represents slice of graph leafs.
@@ -80,6 +66,13 @@ func (n *Node) Read(r io.Reader) error {
 		return err
 	}
 	return nil
+}
+func (n Nodes) String() string {
+	results := make([]string, 0, len(n))
+	for i := range n {
+		results = append(results, strconv.FormatUint(uint64(n[i].N), 10))
+	}
+	return "[" + strings.Join(results, ", ") + "]"
 }
 
 func (n Nodes) Len() int           { return len(n) }
@@ -270,7 +263,9 @@ func (b Bucket) filterSubtree(filter FilterFunc) *Bucket {
 		}
 	}
 	if len(root.nodes) > 0 {
-		sort.Sort(root.nodes)
+		nodes := Nodes(root.nodes)
+		sort.Sort(nodes)
+		root.nodes = nodes
 		return &root
 	}
 	return nil
@@ -317,7 +312,9 @@ func (b Bucket) getMaxSelectionC(ss []Select, filter FilterFunc, cut bool) (*Buc
 	}
 
 	if (!cut && count != 0) || count >= ss[0].Count {
-		sort.Sort(root.nodes)
+		nodes := Nodes(root.nodes)
+		sort.Sort(nodes)
+		root.nodes = nodes
 		return &root, count
 
 	}
@@ -454,7 +451,9 @@ loop:
 		}
 		b.children = append(b.children, c1)
 	}
-	sort.Sort(b.nodes)
+	nodes := Nodes(b.nodes)
+	sort.Sort(nodes)
+	b.nodes = nodes
 }
 
 // UpdateIndices is auxiliary function used to update
@@ -496,88 +495,13 @@ func getChildrenByKey(b Bucket, s Select) []Bucket {
 // Writes Bucket with this byte structure
 // [lnName][Name][lnNodes][Node1]...[NodeN][lnSubprops][sub1]...[subN]
 func (b Bucket) Write(w io.Writer) error {
-	var err error
-
-	// writing name
-	if err = binary.Write(w, binary.BigEndian, int32(len(b.Key)+len(b.Value)+1)); err != nil {
-		return err
-	}
-	if err = binary.Write(w, binary.BigEndian, []byte(b.Name())); err != nil {
-		return err
-	}
-
-	// writing nodes
-	if err = b.nodes.Write(w); err != nil {
-		return err
-	}
-
-	if err = binary.Write(w, binary.BigEndian, int32(len(b.children))); err != nil {
-		return err
-	}
-	for i := range b.children {
-		if err = b.children[i].Write(w); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return rw.NewDelimitedWriter(w).WriteMsg(&b)
 }
 
 // Read reads Bucket in serialized form:
 // [lnName][Name][lnNodes][Node1]...[NodeN][lnSubprops][sub1]...[subN]
 func (b *Bucket) Read(r io.Reader) error {
-	var ln int32
-	var err error
-	if err = binary.Read(r, binary.BigEndian, &ln); err != nil {
-		return err
-	}
-	name := make([]byte, ln)
-	lnE, err := r.Read(name)
-	if err != nil {
-		return err
-	}
-	if int32(lnE) != ln {
-		return errors.New("unmarshaller error: cannot read name")
-	}
-
-	b.Key, b.Value, _ = splitKV(string(name))
-
-	// reading node list
-	if err = b.nodes.Read(r); err != nil {
-		return err
-	}
-
-	if err = binary.Read(r, binary.BigEndian, &ln); err != nil {
-		return err
-	}
-	if ln > 0 {
-		b.children = make([]Bucket, ln)
-		for i := range b.children {
-			if err = b.children[i].Read(r); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-// MarshalBinary implements the encoding.BinaryMarshaler interface.
-func (b Bucket) MarshalBinary() ([]byte, error) {
-	buf := new(bytes.Buffer)
-	if err := b.Write(buf); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
-}
-
-// UnmarshalBinary implements the encoding.BinaryUnmarshaler interface.
-func (b *Bucket) UnmarshalBinary(data []byte) (err error) {
-	buf := bytes.NewBuffer(data)
-	if err = b.Read(buf); err == io.EOF {
-		return nil
-	}
-	return
+	return rw.NewDelimitedReader(r, 1024*1024).ReadMsg(b)
 }
 
 // Name return b's short string identifier.
@@ -613,7 +537,7 @@ func (b Bucket) Children() []Bucket {
 
 // AddNode adds node n with options opts to b.
 func (b *Bucket) AddNode(n uint32, opts ...string) error {
-	return b.addNode(Node{n, 0, 0}, opts...)
+	return b.addNode(Node{N: n}, opts...)
 }
 
 // AddStrawNode adds straw node n with options opts to b.
