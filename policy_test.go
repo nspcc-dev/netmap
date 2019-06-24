@@ -1026,6 +1026,22 @@ func Benchmark_MarshalStress(b *testing.B) {
 	}
 }
 
+func initTestBucket(b *Bucket, name string, levels int, limit int) {
+	b.Key = name
+	b.Value = strconv.FormatUint(rand.Uint64(), 10)
+	if levels == 0 {
+		for i := 0; i < limit; i++ {
+			b.nodes = append(b.nodes, Node{N: rand.Uint32(), W: rand.Uint64()})
+		}
+		return
+	}
+	b.children = make([]Bucket, limit)
+	for i := range b.children {
+		initTestBucket(&b.children[i], "a_"+name, levels-1, limit)
+	}
+	b.fillNodes()
+}
+
 func TestBucket_BigMap(t *testing.T) {
 	var (
 		loc, country, city, dc, n int
