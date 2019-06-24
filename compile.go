@@ -9,8 +9,9 @@ type (
 	Descriptor = map[string]uint32
 
 	CompiledBucket struct {
-		desc Descriptor
-		data []CNode
+		desc    Descriptor
+		data    []CNode
+		weights map[uint32]uint64
 	}
 
 	CompiledFilter struct {
@@ -33,7 +34,6 @@ type (
 		Size     int
 		Key      uint32
 		Value    uint32
-		Weight   uint64
 		disabled bool
 	}
 )
@@ -113,7 +113,7 @@ func (b *Bucket) compile(c uint32, desc Descriptor) (r uint32, cb *CompiledBucke
 		ok bool
 	)
 
-	cb = new(CompiledBucket)
+	cb = &CompiledBucket{weights: make(map[uint32]uint64)}
 	r = c
 	if d, ok = desc[b.Key]; !ok {
 		d = r
@@ -136,11 +136,11 @@ func (b *Bucket) compile(c uint32, desc Descriptor) (r uint32, cb *CompiledBucke
 	if len(b.children) == 0 {
 		for i := range b.nodes {
 			cb.data = append(cb.data, CNode{
-				Size:   1,
-				Key:    nodesDesc,
-				Value:  b.nodes[i].N,
-				Weight: b.nodes[i].W,
+				Size:  1,
+				Key:   nodesDesc,
+				Value: b.nodes[i].N,
 			})
+			cb.weights[b.nodes[i].N] = b.nodes[i].W
 		}
 		cb.data[ind].Size = len(cb.data) - ind
 		return
@@ -158,11 +158,11 @@ func (b *Bucket) compile(c uint32, desc Descriptor) (r uint32, cb *CompiledBucke
 
 func (cb *CompiledBucket) Decompile() *Bucket {
 	desc := invert(cb.desc)
-	_, b := decompile(desc, cb.data)
+	_, b := decompile(desc, cb.weights, cb.data)
 	return &b
 }
 
-func decompile(desc map[uint32]string, data []CNode) (count int, b Bucket) {
+func decompile(desc map[uint32]string, weights map[uint32]uint64, data []CNode) (count int, b Bucket) {
 	if data[0].Key == nodesDesc {
 		for i := range data {
 			if data[i].Key != 0 {
@@ -170,7 +170,7 @@ func decompile(desc map[uint32]string, data []CNode) (count int, b Bucket) {
 			}
 			b.nodes = append(b.nodes, Node{
 				N: data[i].Value,
-				W: data[i].Weight,
+				W: weights[data[i].Value],
 			})
 		}
 		return len(b.nodes), b
@@ -181,7 +181,7 @@ func decompile(desc map[uint32]string, data []CNode) (count int, b Bucket) {
 		Value: desc[data[0].Value],
 	}
 	for count = 1; count < data[0].Size; {
-		n, c := decompile(desc, data[count:])
+		n, c := decompile(desc, weights, data[count:])
 		if data[1].Key == nodesDesc {
 			b.nodes = append(b.nodes, c.nodes...)
 		} else {
