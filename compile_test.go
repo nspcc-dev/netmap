@@ -45,7 +45,7 @@ func TestBucket_Compile(t *testing.T) {
 		Key:   cb.desc["Country"],
 		Count: 2,
 	}
-	applySelects(cb.data[1:], []CompiledSelect{
+	cb.applySelects([]CompiledSelect{
 		{
 			Key:   cb.desc["Location"],
 			Count: 2,

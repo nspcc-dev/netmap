@@ -60,7 +60,7 @@ func (cb *CompiledBucket) GetMaxSelection(g CompiledSFGroup) *CompiledBucket {
 		cb.applyFilter(g.Filters[i])
 	}
 	//cb.applyFilters(g.Filters...)
-	applySelects(cb.data[1:], g.Selectors)
+	cb.applySelects(g.Selectors)
 	return cb
 }
 
@@ -297,40 +297,42 @@ func (f Filter) compileTo(desc Descriptor, cf *CompiledFilter) {
 
 // applySelects returns number of non-disabled nodes
 // corresponding to s[0] and -1 if the selector is empty.
-func applySelects(data []CNode, s []CompiledSelect) (count int) {
+// FIXME this works only when key depends solely on level
+func (cb *CompiledBucket) applySelects(s []CompiledSelect) int {
+	return cb.applySelectsAux(1, len(cb.data), s)
+}
+
+func (cb *CompiledBucket) applySelectsAux(start, finish int, s []CompiledSelect) (count int) {
 	if len(s) == 0 {
 		return -1
-	}
-
-	l := len(data)
-	if len(s) == 1 { // external if to get rid of unnecessary branching in loop
-		for i := 0; i < l; {
-			for i < l && data[i].Key != s[0].Key {
+	} else if len(s) == 1 { // external if to get rid of unnecessary branching in loop
+		for i := start; i < finish; {
+			for i < finish && cb.data[i].Key != s[0].Key {
 				i++
 			}
-			for i < l && !data[i].disabled {
+			for i < finish && !cb.data[i].disabled {
 				count++
-				i += data[i].Size
+				i += cb.data[i].Size
 			}
-			if i < l {
-				i += data[i].Size
+			if i < finish {
+				i += cb.data[i].Size
 			}
 		}
 	} else {
 		c, news := s[1].Count, s[1:]
-		for i := 0; i < l; {
-			for i < l && data[i].Key != s[0].Key {
+		for i := 0; i < finish; {
+			for i < finish && cb.data[i].Key != s[0].Key {
 				i++
 			}
-			for i < l && !data[i].disabled {
-				data[i].disabled = applySelects(data[i+1:i+data[i].Size], news) < c
-				if !data[i].disabled {
+			for i < finish && !cb.data[i].disabled {
+				cb.data[i].disabled = cb.applySelectsAux(i+1, i+cb.data[i].Size, news) < c
+				if !cb.data[i].disabled {
 					count++
 				}
-				i += data[i].Size
+				i += cb.data[i].Size
 			}
-			if i < l {
-				i += data[i].Size
+			if i < finish {
+				i += cb.data[i].Size
 			}
 		}
 	}
