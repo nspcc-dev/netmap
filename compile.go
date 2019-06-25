@@ -6,7 +6,13 @@ import (
 )
 
 type (
-	Descriptor = map[string]uint32
+	Descriptor = *descriptor
+
+	descriptor struct {
+		keyIndex uint32
+		keys     map[string]uint32
+		values   map[string]uint32
+	}
 
 	CompiledBucket struct {
 		desc    Descriptor
@@ -38,20 +44,69 @@ type (
 	}
 )
 
+func (d *descriptor) AddKey(key string) uint32 {
+	if k, ok := d.keys[key]; ok {
+		return k
+	}
+	d.keys[key] = d.keyIndex
+	d.keyIndex++
+	return d.keys[key]
+}
+
+func (d *descriptor) GetKey(key string) uint32 {
+	return d.keys[key]
+}
+
+func (d *descriptor) AddValue(value string) uint32 {
+	if k, ok := d.values[value]; ok {
+		return k
+	}
+	d.values[value] = d.keyIndex
+	d.keyIndex++
+	return d.values[value]
+}
+
+func (d *descriptor) GetValue(value string) uint32 {
+	return d.values[value]
+}
+
+func (d *descriptor) Copy() Descriptor {
+	keys := make(map[string]uint32, len(d.keys))
+	for k, v := range d.keys {
+		keys[k] = v
+	}
+
+	values := make(map[string]uint32, len(d.values))
+	for k, v := range d.keys {
+		values[k] = v
+	}
+
+	return &descriptor{
+		keyIndex: d.keyIndex,
+		keys:     keys,
+		values:   values,
+	}
+}
+
 const (
 	// reserved descriptor keys in compiled map
 	nodesDesc uint32 = iota
 	minDesc
 )
 
+func newDescriptor() Descriptor {
+	return &descriptor{
+		keyIndex: minDesc,
+		keys:     make(map[string]uint32),
+		values:   make(map[string]uint32),
+	}
+}
+
 func (cb CompiledBucket) Copy() (rb CompiledBucket) {
 	rb.data = make([]CNode, len(cb.data))
 	copy(rb.data, cb.data)
 
-	rb.desc = make(Descriptor, len(cb.desc))
-	for k, v := range cb.desc {
-		rb.desc[k] = v
-	}
+	rb.desc = cb.desc.Copy()
 	return
 }
 
@@ -95,42 +150,28 @@ func (g *SFGroup) Compile(desc Descriptor) (cg CompiledSFGroup) {
 
 	cg.Selectors = make([]CompiledSelect, len(g.Selectors))
 	for i := range g.Selectors {
-		cg.Selectors[i].Key = desc[g.Selectors[i].Key]
+		cg.Selectors[i].Key = desc.GetKey(g.Selectors[i].Key)
 		cg.Selectors[i].Count = int(g.Selectors[i].Count)
 	}
 	return
 }
 
 func (b *Bucket) Compile() (cb *CompiledBucket) {
-	desc := make(Descriptor)
-	_, cb = b.compile(minDesc, desc)
+	desc := newDescriptor()
+	cb = b.compile(desc)
 	cb.desc = desc
 	return cb
 }
 
-func (b *Bucket) compile(c uint32, desc Descriptor) (r uint32, cb *CompiledBucket) {
-	var (
-		d  uint32
-		ok bool
-	)
-
+func (b *Bucket) compile(desc Descriptor) (cb *CompiledBucket) {
 	cb = &CompiledBucket{weights: make(map[uint32]uint64)}
-	r = c
-	if d, ok = desc[b.Key]; !ok {
-		d = r
-		desc[b.Key] = d
-		r++
-	}
-	if d, ok = desc[b.Value]; !ok {
-		d = r
-		desc[b.Value] = d
-		r++
-	}
+	desc.AddKey(b.Key)
+	desc.AddValue(b.Value)
 
 	ind := len(cb.data)
 	cb.data = append(cb.data, CNode{
-		Key:   desc[b.Key],
-		Value: desc[b.Value],
+		Key:   desc.GetKey(b.Key),
+		Value: desc.GetValue(b.Value),
 	})
 
 	var nb *CompiledBucket
@@ -147,11 +188,8 @@ func (b *Bucket) compile(c uint32, desc Descriptor) (r uint32, cb *CompiledBucke
 		return
 	}
 	for i := range b.children {
-		r, nb = b.children[i].compile(r, desc)
+		nb = b.children[i].compile(desc)
 		cb.data = append(cb.data, nb.data...)
-		for j, d := range nb.desc {
-			cb.desc[j] = d
-		}
 		for j, w := range nb.weights {
 			cb.weights[j] = w
 		}
@@ -217,11 +255,9 @@ loop:
 			case Operation_NE:
 				val := f.Value.(uint32)
 				if f.Key == cb.data[i].Key {
-					if val == cb.data[i].Value {
-						cb.data[i].disabled = true
-						i += cb.data[i].Size
-						continue loop
-					}
+					cb.data[i].disabled = val == cb.data[i].Value
+					i += cb.data[i].Size
+					continue loop
 				}
 				i++
 			case Operation_AND:
@@ -280,16 +316,16 @@ func (cb *CompiledBucket) applyFilter(f CompiledFilter) {
 
 // FIXME perform full compilation, not just 2 levels
 func (f Filter) compileTo(desc Descriptor, cf *CompiledFilter) {
-	cf.Key = desc[f.Key]
+	cf.Key = desc.GetKey(f.Key)
 	cf.Op = f.F.Op
 	switch cf.Op {
 	case Operation_EQ, Operation_NE:
-		cf.Value = desc[f.F.GetValue()]
+		cf.Value = desc.GetValue(f.F.GetValue())
 	case Operation_AND, Operation_OR:
 		fs := f.F.GetFArgs().Filters
 		result := make([]uint32, 0, len(fs))
 		for i := range fs {
-			result = append(result, desc[fs[i].GetValue()])
+			result = append(result, desc.GetValue(fs[i].GetValue()))
 		}
 		cf.Value = result
 	}
@@ -344,8 +380,11 @@ func (cb CompiledBucket) dump() {
 }
 
 func invert(desc Descriptor) (result map[uint32]string) {
-	result = make(map[uint32]string, len(desc))
-	for k, v := range desc {
+	result = make(map[uint32]string, len(desc.keys)+len(desc.values))
+	for k, v := range desc.keys {
+		result[v] = k
+	}
+	for k, v := range desc.values {
 		result[v] = k
 	}
 	return

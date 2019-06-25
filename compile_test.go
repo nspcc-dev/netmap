@@ -34,20 +34,20 @@ func TestBucket_Compile(t *testing.T) {
 
 	f = CompiledFilter{
 		Op:    Operation_NE,
-		Key:   cb.desc["Location"],
-		Value: cb.desc["America"],
+		Key:   cb.desc.GetKey("Location"),
+		Value: cb.desc.GetValue("America"),
 	}
 	cb.applyFilter(f)
 	cb.dump()
 
 	spew.Dump(cb.desc)
 	s = CompiledSelect{
-		Key:   cb.desc["Country"],
+		Key:   cb.desc.GetKey("Country"),
 		Count: 2,
 	}
 	cb.applySelects([]CompiledSelect{
 		{
-			Key:   cb.desc["Location"],
+			Key:   cb.desc.GetKey("Location"),
 			Count: 2,
 		},
 		s,
