@@ -31,10 +31,10 @@ type (
 	}
 
 	CNode struct {
+		disabled bool
 		Size     int
 		Key      uint32
 		Value    uint32
-		disabled bool
 	}
 )
 
@@ -59,6 +59,7 @@ func (cb *CompiledBucket) GetMaxSelection(g CompiledSFGroup) *CompiledBucket {
 	for i := range g.Filters {
 		cb.applyFilter(g.Filters[i])
 	}
+	//cb.applyFilters(g.Filters...)
 	applySelects(cb.data[1:], g.Selectors)
 	return cb
 }
@@ -148,8 +149,11 @@ func (b *Bucket) compile(c uint32, desc Descriptor) (r uint32, cb *CompiledBucke
 	for i := range b.children {
 		r, nb = b.children[i].compile(r, desc)
 		cb.data = append(cb.data, nb.data...)
-		for j := range nb.desc {
-			cb.desc[j] = nb.desc[j]
+		for j, d := range nb.desc {
+			cb.desc[j] = d
+		}
+		for j, w := range nb.weights {
+			cb.weights[j] = w
 		}
 	}
 	cb.data[ind].Size = len(cb.data) - ind
@@ -194,32 +198,67 @@ func decompile(desc map[uint32]string, weights map[uint32]uint64, data []CNode) 
 	return count, b
 }
 
+func (cb *CompiledBucket) applyFilters(fs ...CompiledFilter) {
+	l := len(cb.data)
+loop:
+	for i := 0; i < l; {
+		for _, f := range fs {
+			switch f.Op {
+			case Operation_EQ:
+				val := f.Value.(uint32)
+				if f.Key == cb.data[i].Key {
+					if val != cb.data[i].Value {
+						cb.data[i].disabled = true
+						i += cb.data[i].Size
+						continue loop
+					}
+				}
+				i++
+			case Operation_NE:
+				val := f.Value.(uint32)
+				if f.Key == cb.data[i].Key {
+					if val == cb.data[i].Value {
+						cb.data[i].disabled = true
+						i += cb.data[i].Size
+						continue loop
+					}
+				}
+				i++
+			case Operation_AND:
+				val := f.Value.([]uint32)
+				if f.Key == cb.data[i].Key {
+					for j := range val {
+						if cb.data[i].Value != val[j] {
+							cb.data[i].disabled = true
+							i += cb.data[i].Size
+							continue loop
+						}
+					}
+				}
+				i++
+			}
+		}
+	}
+}
+
 func (cb *CompiledBucket) applyFilter(f CompiledFilter) {
 	l := len(cb.data)
 	switch f.Op {
 	case Operation_EQ:
 		val := f.Value.(uint32)
-		for i := 0; i < l; {
-			if f.Key == cb.data[i].Key {
-				if val != cb.data[i].Value {
-					cb.data[i].disabled = true
-					i += cb.data[i].Size
-					continue
-				}
+		for i := 0; i < l; i++ {
+			for i < l && f.Key == cb.data[i].Key && val != cb.data[i].Value {
+				cb.data[i].disabled = true
+				i += cb.data[i].Size
 			}
-			i++
 		}
 	case Operation_NE:
 		val := f.Value.(uint32)
-		for i := 0; i < l; {
-			if f.Key == cb.data[i].Key {
-				if val == cb.data[i].Value {
-					cb.data[i].disabled = true
-					i += cb.data[i].Size
-					continue
-				}
+		for i := 0; i < l; i++ {
+			for i < l && f.Key == cb.data[i].Key && val == cb.data[i].Value {
+				cb.data[i].disabled = true
+				i += cb.data[i].Size
 			}
-			i++
 		}
 	case Operation_AND:
 		val := f.Value.([]uint32)
@@ -258,29 +297,44 @@ func (f Filter) compileTo(desc Descriptor, cf *CompiledFilter) {
 
 // applySelects returns number of non-disabled nodes
 // corresponding to s[0] and -1 if the selector is empty.
-func applySelects(data []CNode, s []CompiledSelect) int {
+func applySelects(data []CNode, s []CompiledSelect) (count int) {
 	if len(s) == 0 {
 		return -1
 	}
 
 	l := len(data)
-	count := 0
-	for i := 0; i < l; {
-		if data[i].Key != s[0].Key {
-			i++
-			continue
-		}
-		if !data[i].disabled {
-			n := applySelects(data[i+1:i+data[i].Size], s[1:])
-			if n == -1 || n >= s[1].Count {
+	if len(s) == 1 { // external if to get rid of unnecessary branching in loop
+		for i := 0; i < l; {
+			for i < l && data[i].Key != s[0].Key {
+				i++
+			}
+			for i < l && !data[i].disabled {
 				count++
-			} else {
-				data[i].disabled = true
+				i += data[i].Size
+			}
+			if i < l {
+				i += data[i].Size
 			}
 		}
-		i += data[i].Size
+	} else {
+		c, news := s[1].Count, s[1:]
+		for i := 0; i < l; {
+			for i < l && data[i].Key != s[0].Key {
+				i++
+			}
+			for i < l && !data[i].disabled {
+				data[i].disabled = applySelects(data[i+1:i+data[i].Size], news) < c
+				if !data[i].disabled {
+					count++
+				}
+				i += data[i].Size
+			}
+			if i < l {
+				i += data[i].Size
+			}
+		}
 	}
-	return count
+	return
 }
 
 func (cb CompiledBucket) dump() {

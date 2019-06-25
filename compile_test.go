@@ -59,7 +59,7 @@ func TestBucket_Compile(t *testing.T) {
 
 func randomBucket() *Bucket {
 	b := new(Bucket)
-	initTestBucket(b, "kek", 5, 5)
+	initTestBucket(b, "kek", 4, 10)
 	return b
 	buckets := []bucket{
 		{"/Location:Europe/Country:Germany", []uint32{1}},
@@ -107,16 +107,14 @@ func BenchmarkCompiledBucket_GetMaxSelection(b *testing.B) {
 	g := prepareSFGroup()
 
 	cb := root.Compile()
-	cg := g.Compile(cb.desc)
+	//cg := g.Compile(cb.desc)
 
 	tmp := cb.Copy()
+
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		for i := range tmp.data {
-			tmp.data[i].disabled = false
-		}
-		_ = tmp.GetMaxSelection(cg)
+		_ = tmp.GetMaxSelection(g.Compile(cb.desc))
 	}
 }
 

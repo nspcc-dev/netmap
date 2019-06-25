@@ -90,6 +90,7 @@ func (n Nodes) Write(w io.Writer) error {
 	}
 	return nil
 }
+
 func (n *Nodes) Read(r io.Reader) error {
 	var (
 		err error
