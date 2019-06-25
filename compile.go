@@ -247,16 +247,16 @@ func (cb *CompiledBucket) applyFilter(f CompiledFilter) {
 	case Operation_EQ:
 		val := f.Value.(uint32)
 		for i := 0; i < l; i++ {
-			for i < l && f.Key == cb.data[i].Key && val != cb.data[i].Value {
-				cb.data[i].disabled = true
+			for i < l && f.Key == cb.data[i].Key {
+				cb.data[i].disabled = val != cb.data[i].Value
 				i += cb.data[i].Size
 			}
 		}
 	case Operation_NE:
 		val := f.Value.(uint32)
 		for i := 0; i < l; i++ {
-			for i < l && f.Key == cb.data[i].Key && val == cb.data[i].Value {
-				cb.data[i].disabled = true
+			for i < l && f.Key == cb.data[i].Key {
+				cb.data[i].disabled = val == cb.data[i].Value
 				i += cb.data[i].Size
 			}
 		}
