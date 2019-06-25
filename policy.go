@@ -683,8 +683,10 @@ func splitProps(o string) []Bucket {
 }
 
 func merge(a, b Nodes) Nodes {
-	if a == nil {
+	if len(a) == 0 {
 		return b
+	} else if len(b) == 0 {
+		return a
 	}
 
 	la, lb := len(a), len(b)
