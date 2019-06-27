@@ -121,25 +121,26 @@ func (cb *CompiledBucket) GetMaxSelection(g CompiledSFGroup) *CompiledBucket {
 
 func (cb *CompiledBucket) Shrink() (rb *CompiledBucket) {
 	// probably FIXME copy map
-	return &CompiledBucket{
-		desc: cb.desc,
-		data: shrink(cb.data),
-	}
+	rb = &CompiledBucket{desc: cb.desc, weights: cb.weights}
+	rb.data = make([]CNode, 0, len(cb.data))
+	cb.shrink(0, rb)
+	return rb
 }
 
-func shrink(data []CNode) (r []CNode) {
-	if data[0].disabled {
-		return nil
+func (cb *CompiledBucket) shrink(start int, rb *CompiledBucket) {
+	rb.data = append(rb.data, cb.data[start])
+	count, size := start+1, start+cb.data[start].Size
+	for count < size {
+		for count < size && cb.data[count].disabled {
+			count += cb.data[count].Size
+		}
+		if count < size {
+			s := cb.data[count].Size
+			cb.shrink(count, rb)
+			count += s
+		}
 	}
-	r = []CNode{data[0]}
-	count := 1
-	for count < r[0].Size {
-		size := data[count].Size
-		t := shrink(data[count:])
-		count += size
-		r = append(r, t...)
-	}
-	return r
+	return
 }
 
 func (g *SFGroup) Compile(desc Descriptor) (cg CompiledSFGroup) {
