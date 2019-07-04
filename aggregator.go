@@ -73,11 +73,6 @@ func (a *meanCapSumAgg) Compute() float64 {
 }
 
 func (a *meanCapAgg) Add(n Node) {
-	if a.count == 0 {
-		a.count = 1
-		a.mean = float64(n.C)
-		return
-	}
 	c := a.count + 1
 	a.mean = a.mean*(float64(a.count)/float64(c)) + float64(n.C)/float64(c)
 	a.count++
