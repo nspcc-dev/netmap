@@ -35,6 +35,7 @@ type (
 		scale float64
 	}
 
+	// WeightFunc calculates n's weight.
 	WeightFunc = func(n Node) float64
 )
 
@@ -47,8 +48,11 @@ var (
 	_ Normalizer = (*sigmoidNorm)(nil)
 )
 
+// CapWeightFunc calculates weight which is equal to capacity.
 func CapWeightFunc(n Node) float64 { return float64(n.C) }
 
+// NewWeightFunc returns WeightFunc which multiplies normalized
+// capacity and price.
 // TODO generic solution for arbitrary number of weights
 func NewWeightFunc(capNorm, priceNorm Normalizer) WeightFunc {
 	return func(n Node) float64 {
@@ -56,6 +60,7 @@ func NewWeightFunc(capNorm, priceNorm Normalizer) WeightFunc {
 	}
 }
 
+// Traverse adds all Bucket nodes to a and returns it's argument.
 func (b *Bucket) Traverse(a Aggregator) Aggregator {
 	for i := range b.nodes {
 		a.Add(b.nodes[i])
