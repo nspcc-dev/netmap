@@ -94,3 +94,18 @@ func TestSigmoidNorm_Normalize(t *testing.T) {
 		}
 	})
 }
+
+func TestReverseMinNorm_Normalize(t *testing.T) {
+	t.Run("reverseMin norm should not panic", func(t *testing.T) {
+		norm := &reverseMinNorm{min: 0}
+		require.NotPanics(t, func() { norm.Normalize(0) })
+
+		norm = &reverseMinNorm{min: 1}
+		require.NotPanics(t, func() { norm.Normalize(0) })
+	})
+
+	t.Run("reverseMin norm should equal 1 at min value", func(t *testing.T) {
+		norm := &reverseMinNorm{min: 10}
+		require.InEpsilon(t, 1.0, norm.Normalize(10), eps)
+	})
+}
