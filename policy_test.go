@@ -301,19 +301,19 @@ func TestBucket_GetWeightSelection(t *testing.T) {
 	)
 
 	buckets = []strawBucket{
-		{"/Location:Asia/Country:Korea", Nodes{{N: 1, W: 1}, {N: 3, W: 3}}},
-		{"/Location:Asia/Country:China", Nodes{{N: 2, W: 1}}},
-		{"/Location:Europe/Country:Germany/City:Hamburg", Nodes{{N: 25, W: 8}}},
-		{"/Location:Europe/Country:Germany/City:Bremen", Nodes{{N: 27, W: 1}, {N: 29, W: 2}}},
-		{"/Location:Europe/Country:Spain/City:Madrid", Nodes{{N: 17, W: 2}, {N: 18, W: 1}}},
-		{"/Location:Europe/Country:Spain/City:Barcelona", Nodes{{N: 26, W: 1}, {N: 30, W: 10}}},
-		{"/Location:NorthAmerica/Country:USA/City:NewYork", Nodes{{N: 19, W: 1}, {N: 20, W: 9}}},
+		{"/Location:Asia/Country:Korea", Nodes{{N: 1, C: 1}, {N: 3, C: 3}}},
+		{"/Location:Asia/Country:China", Nodes{{N: 2, C: 1}}},
+		{"/Location:Europe/Country:Germany/City:Hamburg", Nodes{{N: 25, C: 8}}},
+		{"/Location:Europe/Country:Germany/City:Bremen", Nodes{{N: 27, C: 1}, {N: 29, C: 2}}},
+		{"/Location:Europe/Country:Spain/City:Madrid", Nodes{{N: 17, C: 2}, {N: 18, C: 1}}},
+		{"/Location:Europe/Country:Spain/City:Barcelona", Nodes{{N: 26, C: 1}, {N: 30, C: 10}}},
+		{"/Location:NorthAmerica/Country:USA/City:NewYork", Nodes{{N: 19, C: 1}, {N: 20, C: 9}}},
 	}
 
 	root, err = newStrawRoot(buckets...)
 	require.NoError(t, err)
 
-	nodes = Nodes{{N: 25, W: 8}, {N: 30, W: 10}, {N: 20, W: 9}, {N: 3, W: 3}}
+	nodes = Nodes{{N: 25, C: 8}, {N: 30, C: 10}, {N: 20, C: 9}, {N: 3, C: 3}}
 
 	ss = []Select{
 		{Key: NodesBucket, Count: 4},
@@ -328,7 +328,7 @@ func TestBucket_GetWeightSelection(t *testing.T) {
 		{Key: NodesBucket, Count: 1},
 	}
 
-	nodes = Nodes{{N: 17, W: 2}, {N: 25, W: 8}, {N: 29, W: 2}, {N: 30, W: 10}}
+	nodes = Nodes{{N: 17, C: 2}, {N: 25, C: 8}, {N: 29, C: 2}, {N: 30, C: 10}}
 	r = root.GetSelection(ss, defaultPivot)
 	require.NotNil(t, r)
 	require.Equal(t, r.Nodelist(), nodes)
@@ -441,20 +441,20 @@ func TestBucket_GetMaxSelection(t *testing.T) {
 
 	// check if weights are correctly saved after filter operation
 	sbuckets = []strawBucket{
-		{"/Location:Europe/Country:Germany/City:Berlin", Nodes{{N: 9, W: 1}, {N: 10, W: 2}}},
-		{"/Location:Europe/Country:Germany/City:Hamburg", Nodes{{N: 25, W: 1}}},
-		{"/Location:Europe/Country:Germany/City:Bremen", Nodes{{N: 27, W: 1}, {N: 29, W: 2}}},
-		{"/Location:Europe/Country:Italy/City:Rome", Nodes{{N: 11, W: 1}, {N: 12, W: 1}}},
-		{"/Location:Europe/Country:Spain/City:Madrid", Nodes{{N: 17, W: 1}, {N: 1, W: 18}}},
-		{"/Location:Europe/Country:Spain/City:Barcelona", Nodes{{N: 26, W: 1}, {N: 30, W: 1}}},
+		{"/Location:Europe/Country:Germany/City:Berlin", Nodes{{N: 9, C: 1}, {N: 10, C: 2}}},
+		{"/Location:Europe/Country:Germany/City:Hamburg", Nodes{{N: 25, C: 1}}},
+		{"/Location:Europe/Country:Germany/City:Bremen", Nodes{{N: 27, C: 1}, {N: 29, C: 2}}},
+		{"/Location:Europe/Country:Italy/City:Rome", Nodes{{N: 11, C: 1}, {N: 12, C: 1}}},
+		{"/Location:Europe/Country:Spain/City:Madrid", Nodes{{N: 17, C: 1}, {N: 1, C: 18}}},
+		{"/Location:Europe/Country:Spain/City:Barcelona", Nodes{{N: 26, C: 1}, {N: 30, C: 1}}},
 	}
 	root, err = newStrawRoot(sbuckets...)
 	require.NoError(t, err)
 
 	sbuckets = []strawBucket{
-		{"/Location:Europe/Country:Germany/City:Berlin", Nodes{{N: 9, W: 1}, {N: 10, W: 2}}},
-		{"/Location:Europe/Country:Germany/City:Hamburg", Nodes{{N: 25, W: 1}}},
-		{"/Location:Europe/Country:Germany/City:Bremen", Nodes{{N: 27, W: 1}, {N: 29, W: 2}}},
+		{"/Location:Europe/Country:Germany/City:Berlin", Nodes{{N: 9, C: 1}, {N: 10, C: 2}}},
+		{"/Location:Europe/Country:Germany/City:Hamburg", Nodes{{N: 25, C: 1}}},
+		{"/Location:Europe/Country:Germany/City:Bremen", Nodes{{N: 27, C: 1}, {N: 29, C: 2}}},
 	}
 	exp, err = newStrawRoot(sbuckets...)
 	require.NoError(t, err)

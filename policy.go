@@ -35,10 +35,11 @@ type (
 		children []Bucket
 	}
 
-	// Node type represents single graph leaf with index N and weight W.
+	// Node type represents single graph leaf with index N, capacity C and price P.
 	Node struct {
 		N uint32
-		W uint64
+		C uint64
+		P uint64
 	}
 
 	// Nodes represents slice of graph leafs.
@@ -59,7 +60,10 @@ func (n Node) Write(w io.Writer) error {
 	if err = binary.Write(w, binary.BigEndian, n.N); err != nil {
 		return err
 	}
-	if err = binary.Write(w, binary.BigEndian, n.W); err != nil {
+	if err = binary.Write(w, binary.BigEndian, n.C); err != nil {
+		return err
+	}
+	if err = binary.Write(w, binary.BigEndian, n.P); err != nil {
 		return err
 	}
 	return nil
@@ -69,7 +73,10 @@ func (n *Node) Read(r io.Reader) error {
 	if err = binary.Read(r, binary.BigEndian, &n.N); err != nil {
 		return err
 	}
-	if err = binary.Read(r, binary.BigEndian, &n.W); err != nil {
+	if err = binary.Read(r, binary.BigEndian, &n.C); err != nil {
+		return err
+	}
+	if err = binary.Read(r, binary.BigEndian, &n.P); err != nil {
 		return err
 	}
 	return nil
@@ -123,7 +130,7 @@ func (n Nodes) Nodes() []uint32 {
 func (n Nodes) Weights() []uint64 {
 	w := make([]uint64, 0, len(n))
 	for i := range n {
-		w = append(w, n[i].W)
+		w = append(w, n[i].C)
 	}
 	return w
 }
@@ -605,7 +612,7 @@ func (b Bucket) Children() []Bucket {
 
 // AddNode adds node n with options opts to b.
 func (b *Bucket) AddNode(n uint32, opts ...string) error {
-	return b.addNode(Node{n, 0}, opts...)
+	return b.addNode(Node{n, 0, 0}, opts...)
 }
 
 // AddStrawNode adds straw node n with options opts to b.
