@@ -35,6 +35,10 @@ type (
 		scale float64
 	}
 
+	constNorm struct {
+		value float64
+	}
+
 	// WeightFunc calculates n's weight.
 	WeightFunc = func(n Node) float64
 )
@@ -46,6 +50,7 @@ var (
 
 	_ Normalizer = (*reverseMinNorm)(nil)
 	_ Normalizer = (*sigmoidNorm)(nil)
+	_ Normalizer = (*constNorm)(nil)
 )
 
 // CapWeightFunc calculates weight which is equal to capacity.
@@ -58,6 +63,15 @@ func NewWeightFunc(capNorm, priceNorm Normalizer) WeightFunc {
 	return func(n Node) float64 {
 		return capNorm.Normalize(float64(n.C)) * priceNorm.Normalize(float64(n.P))
 	}
+}
+
+func getDefaultWeightFunc(ns Nodes) WeightFunc {
+	agg := new(meanCapAgg)
+	for i := range ns {
+		agg.Add(ns[i])
+	}
+	// TODO replace constNorm for price with minPriceAgg when ready
+	return NewWeightFunc(&sigmoidNorm{agg.Compute()}, &constNorm{1})
 }
 
 // Traverse adds all Bucket nodes to a and returns it's argument.
@@ -107,4 +121,8 @@ func (r *reverseMinNorm) Normalize(w float64) float64 {
 func (r *sigmoidNorm) Normalize(w float64) float64 {
 	x := w / r.scale
 	return x / (1 + x)
+}
+
+func (r *constNorm) Normalize(_ float64) float64 {
+	return r.value
 }

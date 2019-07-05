@@ -128,9 +128,10 @@ func (n Nodes) Nodes() []uint32 {
 
 // Weights returns slice ow nodes weights W.
 func (n Nodes) Weights() []float64 {
+	f := getDefaultWeightFunc(n)
 	w := make([]float64, 0, len(n))
 	for i := range n {
-		w = append(w, CapWeightFunc(n[i]))
+		w = append(w, f(n[i]))
 	}
 	return w
 }

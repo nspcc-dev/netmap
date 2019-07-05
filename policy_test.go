@@ -26,7 +26,7 @@ func newRoot(bs ...bucket) (b Bucket, err error) {
 	for i := range bs {
 		n := make(Nodes, 0, len(bs[i].nodes))
 		for j := range bs[i].nodes {
-			n = append(n, Node{N: bs[i].nodes[j]})
+			n = append(n, Node{N: bs[i].nodes[j], C: uint64(bs[i].nodes[j] + 1)})
 		}
 		if err = b.AddBucket(bs[i].name, n); err != nil {
 			return
@@ -313,7 +313,7 @@ func TestBucket_GetWeightSelection(t *testing.T) {
 	root, err = newStrawRoot(buckets...)
 	require.NoError(t, err)
 
-	nodes = Nodes{{N: 25, C: 8}, {N: 30, C: 10}, {N: 20, C: 9}, {N: 3, C: 3}}
+	nodes = Nodes{{N: 25, C: 8}, {N: 20, C: 9}, {N: 3, C: 3}, {N: 30, C: 10}}
 
 	ss = []Select{
 		{Key: NodesBucket, Count: 4},
@@ -328,7 +328,7 @@ func TestBucket_GetWeightSelection(t *testing.T) {
 		{Key: NodesBucket, Count: 1},
 	}
 
-	nodes = Nodes{{N: 17, C: 2}, {N: 25, C: 8}, {N: 29, C: 2}, {N: 30, C: 10}}
+	nodes = Nodes{{N: 18, C: 1}, {N: 25, C: 8}, {N: 29, C: 2}, {N: 30, C: 10}}
 	r = root.GetSelection(ss, defaultPivot)
 	require.NotNil(t, r)
 	require.Equal(t, r.Nodelist(), nodes)
