@@ -13,7 +13,7 @@ require (
 	github.com/golang/protobuf v1.2.0
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect
-	github.com/nspcc-dev/hrw v1.0.7
+	github.com/nspcc-dev/hrw v1.0.8
 	github.com/pkg/errors v0.8.0
 	github.com/stretchr/testify v1.3.0
 	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect

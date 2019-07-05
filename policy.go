@@ -127,10 +127,10 @@ func (n Nodes) Nodes() []uint32 {
 }
 
 // Weights returns slice ow nodes weights W.
-func (n Nodes) Weights() []uint64 {
-	w := make([]uint64, 0, len(n))
+func (n Nodes) Weights() []float64 {
+	w := make([]float64, 0, len(n))
 	for i := range n {
-		w = append(w, n[i].C)
+		w = append(w, CapWeightFunc(n[i]))
 	}
 	return w
 }
