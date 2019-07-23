@@ -66,6 +66,33 @@ func TestAggregator_Compute(t *testing.T) {
 	a = new(minPriceAgg)
 	b.Traverse(a)
 	require.InEpsilon(t, 1.0, a.Compute(), eps)
+
+	a = new(meanPriceIQRAgg)
+	b.Traverse(a)
+	require.InEpsilon(t, 2.0, a.Compute(), eps)
+
+	mp := new(meanPriceIQRAgg)
+	nodes := []Node{{P: 1}, {P: 1}, {P: 10}, {P: 3}, {P: 5}, {P: 5}, {P: 1}, {P: 100}}
+	for i := range nodes {
+		mp.Add(nodes[i])
+	}
+
+	mp.k = 0.5
+	require.InEpsilon(t, 2.666, mp.Compute(), eps)
+
+	mp.k = 1.5
+	require.InEpsilon(t, 3.714, mp.Compute(), eps)
+
+	mp.k = 23.0
+	require.InEpsilon(t, 3.714, mp.Compute(), eps)
+
+	mp.k = 24.0
+	require.InEpsilon(t, 15.75, mp.Compute(), eps)
+
+	mp = new(meanPriceIQRAgg)
+	mp.Add(Node{P: 1})
+	mp.Add(Node{P: 101})
+	require.InEpsilon(t, 51.0, mp.Compute(), eps)
 }
 
 func TestSigmoidNorm_Normalize(t *testing.T) {
