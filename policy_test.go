@@ -2,6 +2,7 @@ package netmap
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"strconv"
 	"testing"
@@ -959,6 +960,33 @@ func TestBucket_FindNodes(t *testing.T) {
 	nscopy := root.FindNodes(defaultPivot, SFGroup{Selectors: ss})
 	require.Len(t, nscopy, 3)
 	require.Equal(t, ns, nscopy)
+}
+
+func TestNodes_Weight(t *testing.T) {
+	var N Nodes
+	t.Run("empty weights", func(t *testing.T) {
+		N = Nodes{{N: 0}, {N: 1}, {N: 2}, {N: 3}, {N: 4}}
+		for _, weight := range N.Weights() {
+			require.False(t, math.IsNaN(weight))
+			require.Equal(t, 0.0, weight)
+		}
+	})
+	t.Run(" non empty uniform weight", func(t *testing.T) {
+		N = Nodes{{N: 0, C: 2, P: 1}, {N: 1, C: 2, P: 1}, {N: 2, C: 2, P: 1}, {N: 3, C: 2, P: 1}, {N: 4, C: 2, P: 1}}
+		for _, weight := range N.Weights() {
+			require.False(t, math.IsNaN(weight))
+			require.Equal(t, 0.5, weight)
+		}
+	})
+	t.Run(" non empty non uniform weight", func(t *testing.T) {
+		N = Nodes{{N: 0, C: 20, P: 1}, {N: 1, C: 1, P: 1}, {N: 2, C: 30, P: 1}, {N: 3, C: 100, P: 1}, {N: 4, C: 42, P: 1}}
+		var prev float64
+		for _, weight := range N.Weights() {
+			require.False(t, math.IsNaN(weight))
+			require.False(t, prev == weight)
+			prev = weight
+		}
+	})
 }
 
 func TestBucket_NewOption(t *testing.T) {

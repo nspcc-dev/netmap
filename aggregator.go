@@ -98,6 +98,9 @@ func (a *meanCapSumAgg) Add(n Node) {
 }
 
 func (a *meanCapSumAgg) Compute() float64 {
+	if a.count == 0 {
+		return 0
+	}
 	return float64(a.sum) / float64(a.count)
 }
 
@@ -162,6 +165,9 @@ func (r *reverseMinNorm) Normalize(w float64) float64 {
 }
 
 func (r *sigmoidNorm) Normalize(w float64) float64 {
+	if r.scale == 0 {
+		return 0
+	}
 	x := w / r.scale
 	return x / (1 + x)
 }
