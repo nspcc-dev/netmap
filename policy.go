@@ -31,6 +31,7 @@ type (
 	Bucket struct {
 		Key      string
 		Value    string
+		weight   float64
 		nodes    Nodes
 		children []Bucket
 	}
@@ -587,9 +588,9 @@ func (b Bucket) Name() string {
 
 func (b *Bucket) fillNodes() {
 	r := b.nodes
-	for _, c := range b.children {
-		c.fillNodes()
-		r = merge(r, c.Nodelist())
+	for i := range b.children {
+		b.children[i].fillNodes()
+		r = merge(r, b.children[i].Nodelist())
 	}
 	b.nodes = r
 }

@@ -25,10 +25,10 @@ func TestNewWeightFunc(t *testing.T) {
 
 	initTestBucket(t, &b)
 
-	meanCap := b.Traverse(new(meanCapAgg)).Compute()
+	meanCap := b.Traverse(new(meanAgg), CapWeightFunc).Compute()
 	capNorm := &sigmoidNorm{scale: meanCap}
 
-	minPrice := b.Traverse(new(minPriceAgg)).Compute()
+	minPrice := b.Traverse(new(minAgg), PriceWeightFunc).Compute()
 	priceNorm := &reverseMinNorm{min: minPrice}
 
 	wf := NewWeightFunc(capNorm, priceNorm)
@@ -55,26 +55,26 @@ func TestAggregator_Compute(t *testing.T) {
 
 	initTestBucket(t, &b)
 
-	a = new(meanCapAgg)
-	b.Traverse(a)
+	a = new(meanAgg)
+	b.Traverse(a, CapWeightFunc)
 	require.InEpsilon(t, 3.0, a.Compute(), eps)
 
-	a = new(meanCapSumAgg)
-	b.Traverse(a)
+	a = new(meanSumAgg)
+	b.Traverse(a, CapWeightFunc)
 	require.InEpsilon(t, 3.0, a.Compute(), eps)
 
-	a = new(minPriceAgg)
-	b.Traverse(a)
+	a = new(minAgg)
+	b.Traverse(a, PriceWeightFunc)
 	require.InEpsilon(t, 1.0, a.Compute(), eps)
 
-	a = new(meanPriceIQRAgg)
-	b.Traverse(a)
+	a = new(meanIQRAgg)
+	b.Traverse(a, PriceWeightFunc)
 	require.InEpsilon(t, 2.0, a.Compute(), eps)
 
-	mp := new(meanPriceIQRAgg)
+	mp := new(meanIQRAgg)
 	nodes := []Node{{P: 1}, {P: 1}, {P: 10}, {P: 3}, {P: 5}, {P: 5}, {P: 1}, {P: 100}}
 	for i := range nodes {
-		mp.Add(nodes[i])
+		mp.Add(PriceWeightFunc(nodes[i]))
 	}
 
 	mp.k = 0.5
@@ -89,9 +89,9 @@ func TestAggregator_Compute(t *testing.T) {
 	mp.k = 24.0
 	require.InEpsilon(t, 15.75, mp.Compute(), eps)
 
-	mp = new(meanPriceIQRAgg)
-	mp.Add(Node{P: 1})
-	mp.Add(Node{P: 101})
+	mp.Clear()
+	mp.Add(1)
+	mp.Add(101)
 	require.InEpsilon(t, 51.0, mp.Compute(), eps)
 }
 
@@ -135,4 +135,36 @@ func TestReverseMinNorm_Normalize(t *testing.T) {
 		norm := &reverseMinNorm{min: 10}
 		require.InEpsilon(t, 1.0, norm.Normalize(10), eps)
 	})
+}
+
+func TestBucket_TraverseTree(t *testing.T) {
+	var (
+		meanAF = AggregatorFactory{New: func() Aggregator { return new(meanAgg) }}
+		minAF  = AggregatorFactory{New: func() Aggregator { return new(minAgg) }}
+	)
+
+	b := &Bucket{
+		children: []Bucket{
+			{nodes: Nodes{{0, 1, 2}, {2, 3, 2}}},
+			{
+				children: []Bucket{
+					{nodes: Nodes{{1, 2, 3}, {10, 6, 1}}},
+					{nodes: Nodes{{12, 3, 4}, {2, 3, 4}}},
+				},
+			},
+		},
+	}
+	b.fillNodes()
+
+	b.TraverseTree(meanAF, CapWeightFunc)
+	require.InEpsilon(t, 2, b.children[0].weight, eps)
+	require.InEpsilon(t, 3.5, b.children[1].weight, eps)
+	require.InEpsilon(t, 4, b.children[1].children[0].weight, eps)
+	require.InEpsilon(t, 3, b.children[1].children[1].weight, eps)
+
+	b.TraverseTree(minAF, PriceWeightFunc)
+	require.InEpsilon(t, 2, b.children[0].weight, eps)
+	require.InEpsilon(t, 1, b.children[1].weight, eps)
+	require.InEpsilon(t, 1, b.children[1].children[0].weight, eps)
+	require.InEpsilon(t, 4, b.children[1].children[1].weight, eps)
 }
