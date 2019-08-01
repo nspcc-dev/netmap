@@ -383,7 +383,15 @@ func (b Bucket) GetSelection(ss []Select, pivot []byte) *Bucket {
 
 	cs = getChildrenByKey(b, ss[0])
 	if len(pivot) != 0 {
-		hrw.SortSliceByValue(cs, pivotHash)
+		if b.weight == 0 {
+			hrw.SortSliceByValue(cs, pivotHash)
+		} else {
+			weights := make([]float64, len(cs))
+			for i := range weights {
+				weights[i] = cs[i].weight
+			}
+			hrw.SortSliceByWeightValue(cs, weights, pivotHash)
+		}
 	}
 	for i := 0; i < len(cs); i++ {
 		if r = cs[i].GetSelection(ss[1:], pivot); r != nil {
