@@ -29,8 +29,10 @@ type (
 
 	// Bucket represents netmap as graph.
 	Bucket struct {
-		Key      string
-		Value    string
+		Key   string
+		Value string
+
+		weight   float64
 		nodes    Nodes
 		children []Bucket
 	}
@@ -49,37 +51,46 @@ type (
 	FilterFunc func(Nodes) Nodes
 )
 
+// Check checks if bucket satisfies schema s.
+func (b *Bucket) Check(s Schema) bool {
+	if len(s) == 0 {
+		return len(b.children) == 0
+	}
+	for i := range b.children {
+		if !b.children[i].Check(s[1:]) {
+			return false
+		}
+	}
+	return true
+}
+
 // Hash is a function from hrw.Hasher interface. It is implemented
 // to support weighted hrw therefore sort function sorts nodes
 // based on their `N` value.
 func (n Node) Hash() uint64 {
 	return uint64(n.N)
 }
-func (n Node) Write(w io.Writer) error {
-	var err error
+
+// Write writes node to w.
+func (n Node) Write(w io.Writer) (err error) {
 	if err = binary.Write(w, binary.BigEndian, n.N); err != nil {
-		return err
+		return
 	}
 	if err = binary.Write(w, binary.BigEndian, n.C); err != nil {
-		return err
+		return
 	}
-	if err = binary.Write(w, binary.BigEndian, n.P); err != nil {
-		return err
-	}
-	return nil
+	return binary.Write(w, binary.BigEndian, n.P)
 }
-func (n *Node) Read(r io.Reader) error {
-	var err error
+
+// Read reads node from r.
+func (n *Node) Read(r io.Reader) (err error) {
 	if err = binary.Read(r, binary.BigEndian, &n.N); err != nil {
-		return err
+		return
 	}
 	if err = binary.Read(r, binary.BigEndian, &n.C); err != nil {
-		return err
+		return
 	}
-	if err = binary.Read(r, binary.BigEndian, &n.P); err != nil {
-		return err
-	}
-	return nil
+	return binary.Read(r, binary.BigEndian, &n.P)
 }
 
 func (n Nodes) Len() int           { return len(n) }
@@ -117,23 +128,23 @@ func (n *Nodes) Read(r io.Reader) error {
 	return nil
 }
 
-// Nodes returns slice of nodes indexes N.
-func (n Nodes) Nodes() []uint32 {
-	ns := make([]uint32, 0, len(n))
+// Nodes returns slice of nodes indices N.
+func (n Nodes) Nodes() (ns []uint32) {
+	ns = make([]uint32, len(n))
 	for i := range n {
-		ns = append(ns, n[i].N)
+		ns[i] = n[i].N
 	}
-	return ns
+	return
 }
 
 // Weights returns slice ow nodes weights W.
-func (n Nodes) Weights() []float64 {
+func (n Nodes) Weights() (ws []float64) {
 	f := getDefaultWeightFunc(n)
-	w := make([]float64, 0, len(n))
+	ws = make([]float64, len(n))
 	for i := range n {
-		w = append(w, f(n[i]))
+		ws[i] = f(n[i])
 	}
-	return w
+	return
 }
 
 // Hash uses murmur3 hash to return uint64.
@@ -182,23 +193,24 @@ func (b *Bucket) findNodes(pivot []byte, s SFGroup) Nodes {
 }
 
 // Copy returns deep copy of Bucket.
-func (b Bucket) Copy() Bucket {
-	var bc = Bucket{
-		Key:   b.Key,
-		Value: b.Value,
-	}
+func (b Bucket) Copy() (c Bucket) {
+	b.CopyTo(&c)
+	return
+}
+
+func (b Bucket) CopyTo(to *Bucket) {
+	to.Key = b.Key
+	to.Value = b.Value
 	if b.nodes != nil {
-		bc.nodes = make(Nodes, len(b.nodes))
-		copy(bc.nodes, b.nodes)
+		to.nodes = make(Nodes, len(b.nodes))
+		copy(to.nodes, b.nodes)
 	}
 	if b.children != nil {
-		bc.children = make([]Bucket, 0, len(b.children))
+		to.children = make([]Bucket, len(b.children))
 		for i := 0; i < len(b.children); i++ {
-			bc.children = append(bc.children, b.children[i].Copy())
+			b.children[i].CopyTo(&to.children[i])
 		}
 	}
-
-	return bc
 }
 
 // IsValid checks if bucket is well-formed:
@@ -286,7 +298,7 @@ func (b Bucket) getMaxSelectionC(ss []Select, filter FilterFunc, cut bool) (*Buc
 		r        *Bucket
 		sel      []Select
 		count, n uint32
-		cutc     bool
+		used     bool
 	)
 
 	if len(ss) == 0 || ss[0].Key == NodesBucket {
@@ -302,26 +314,25 @@ func (b Bucket) getMaxSelectionC(ss []Select, filter FilterFunc, cut bool) (*Buc
 	root.Value = b.Value
 	for _, c := range b.children {
 		sel = ss
-		if cutc = c.Key == ss[0].Key; cutc {
+		if used = c.Key == ss[0].Key; used {
 			sel = ss[1:]
 		}
-		if r, n = c.getMaxSelectionC(sel, filter, cutc); r != nil {
+		if r, n = c.getMaxSelectionC(sel, filter, used); r != nil {
 			root.children = append(root.children, *r)
 			root.nodes = append(root.nodes, r.Nodelist()...)
-			if cutc {
-				count++
-			} else {
-				count += n
+			if used {
+				n = 1
 			}
+			count += n
 		}
 	}
 
-	if (!cut && count != 0) || count >= ss[0].Count {
-		sort.Sort(root.nodes)
-		return &root, count
-
+	if count == 0 || (cut && count < ss[0].Count) {
+		return nil, 0
 	}
-	return nil, 0
+
+	sort.Sort(root.nodes)
+	return &root, count
 }
 
 // GetMaxSelection returns 'maximal container' -- subgraph which contains
