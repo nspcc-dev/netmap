@@ -64,6 +64,31 @@ var (
 	_ Normalizer = (*constNorm)(nil)
 )
 
+// NewMeanSumAgg returns an aggregator which
+// computes mean value by keeping total sum.
+func NewMeanSumAgg() Aggregator {
+	return new(meanSumAgg)
+}
+
+// NewMeanAgg returns an aggregator which
+// computes mean value by recalculating it on
+// every addition.
+func NewMeanAgg() Aggregator {
+	return new(meanAgg)
+}
+
+// NewMinAgg returns an aggregator which
+// computes min value.
+func NewMinAgg() Aggregator {
+	return new(minAgg)
+}
+
+// NewMeanIQRAgg returns an aggregator which
+// computes mean value of values from IQR interval.
+func NewMeanIQRAgg() Aggregator {
+	return new(meanIQRAgg)
+}
+
 func (a *meanSumAgg) Add(n float64) {
 	a.sum += n
 	a.count++
