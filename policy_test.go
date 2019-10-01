@@ -314,7 +314,7 @@ func TestBucket_GetWeightSelection(t *testing.T) {
 	root, err = newStrawRoot(buckets...)
 	require.NoError(t, err)
 
-	nodes = Nodes{{N: 25, C: 8}, {N: 20, C: 9}, {N: 3, C: 3}, {N: 30, C: 10}}
+	nodes = Nodes{{N: 26, C: 1}, {N: 1, C: 1}, {N: 25, C: 8}, {N: 27, C: 1}}
 
 	ss = []Select{
 		{Key: NodesBucket, Count: 4},
@@ -329,7 +329,7 @@ func TestBucket_GetWeightSelection(t *testing.T) {
 		{Key: NodesBucket, Count: 1},
 	}
 
-	nodes = Nodes{{N: 18, C: 1}, {N: 25, C: 8}, {N: 29, C: 2}, {N: 30, C: 10}}
+	nodes = Nodes{{N: 18, C: 1}, {N: 25, C: 8}, {N: 26, C: 1}, {N: 27, C: 1}}
 	r = root.GetSelection(ss, defaultPivot)
 	require.NotNil(t, r)
 	require.Equal(t, r.Nodelist(), nodes)

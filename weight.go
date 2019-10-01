@@ -23,12 +23,13 @@ func NewWeightFunc(capNorm, priceNorm Normalizer) WeightFunc {
 }
 
 func getDefaultWeightFunc(ns Nodes) WeightFunc {
-	agg := new(meanAgg)
+	mean := new(meanAgg)
+	min := new(minAgg)
 	for i := range ns {
-		agg.Add(float64(ns[i].C))
+		mean.Add(float64(ns[i].C))
+		min.Add(float64(ns[i].P))
 	}
-	// TODO replace constNorm for price with minAgg when ready
-	return NewWeightFunc(&sigmoidNorm{agg.Compute()}, &constNorm{1})
+	return NewWeightFunc(&sigmoidNorm{mean.Compute()}, &reverseMinNorm{min.Compute()})
 }
 
 // Traverse adds all Bucket nodes to a and returns it's argument.
