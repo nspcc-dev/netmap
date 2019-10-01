@@ -183,11 +183,11 @@ func (b *Bucket) findNodes(pivot []byte, s SFGroup) Nodes {
 }
 
 // Copy returns deep copy of Bucket.
-func (b Bucket) Copy() Bucket {
-	var bc = Bucket{
-		Key:   b.Key,
-		Value: b.Value,
-	}
+func (b Bucket) Copy() (bc Bucket) {
+	bc.weight = b.weight
+	bc.Key = b.Key
+	bc.Value = b.Value
+
 	if b.nodes != nil {
 		bc.nodes = make(Nodes, len(b.nodes))
 		copy(bc.nodes, b.nodes)
