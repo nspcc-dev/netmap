@@ -8,8 +8,9 @@ type (
 	// Aggregator can calculate some value across all netmap
 	// such as median, minimum or maximum.
 	Aggregator interface {
-		Add(Node)
+		Add(float64)
 		Compute() float64
+		Clear()
 	}
 
 	// Normalizer normalizes weight.
@@ -17,23 +18,23 @@ type (
 		Normalize(w float64) float64
 	}
 
-	meanCapSumAgg struct {
-		sum   uint64
+	meanSumAgg struct {
+		sum   float64
 		count int
 	}
 
-	meanCapAgg struct {
+	meanAgg struct {
 		mean  float64
 		count int
 	}
 
-	minPriceAgg struct {
-		min uint64
+	minAgg struct {
+		min float64
 	}
 
-	meanPriceIQRAgg struct {
+	meanIQRAgg struct {
 		k   float64
-		arr []uint64
+		arr []float64
 	}
 
 	reverseMinNorm struct {
@@ -53,82 +54,92 @@ type (
 )
 
 var (
-	_ Aggregator = (*meanCapSumAgg)(nil)
-	_ Aggregator = (*meanCapAgg)(nil)
-	_ Aggregator = (*minPriceAgg)(nil)
-	_ Aggregator = (*meanPriceIQRAgg)(nil)
+	_ Aggregator = (*meanSumAgg)(nil)
+	_ Aggregator = (*meanAgg)(nil)
+	_ Aggregator = (*minAgg)(nil)
+	_ Aggregator = (*meanIQRAgg)(nil)
 
 	_ Normalizer = (*reverseMinNorm)(nil)
 	_ Normalizer = (*sigmoidNorm)(nil)
 	_ Normalizer = (*constNorm)(nil)
 )
 
-// CapWeightFunc calculates weight which is equal to capacity.
-func CapWeightFunc(n Node) float64 { return float64(n.C) }
-
-// NewWeightFunc returns WeightFunc which multiplies normalized
-// capacity and price.
-// TODO generic solution for arbitrary number of weights
-func NewWeightFunc(capNorm, priceNorm Normalizer) WeightFunc {
-	return func(n Node) float64 {
-		return capNorm.Normalize(float64(n.C)) * priceNorm.Normalize(float64(n.P))
-	}
+// NewMeanSumAgg returns an aggregator which
+// computes mean value by keeping total sum.
+func NewMeanSumAgg() Aggregator {
+	return new(meanSumAgg)
 }
 
-func getDefaultWeightFunc(ns Nodes) WeightFunc {
-	agg := new(meanCapAgg)
-	for i := range ns {
-		agg.Add(ns[i])
-	}
-	// TODO replace constNorm for price with minPriceAgg when ready
-	return NewWeightFunc(&sigmoidNorm{agg.Compute()}, &constNorm{1})
+// NewMeanAgg returns an aggregator which
+// computes mean value by recalculating it on
+// every addition.
+func NewMeanAgg() Aggregator {
+	return new(meanAgg)
 }
 
-// Traverse adds all Bucket nodes to a and returns it's argument.
-func (b *Bucket) Traverse(a Aggregator) Aggregator {
-	for i := range b.nodes {
-		a.Add(b.nodes[i])
-	}
-	return a
+// NewMinAgg returns an aggregator which
+// computes min value.
+func NewMinAgg() Aggregator {
+	return new(minAgg)
 }
 
-func (a *meanCapSumAgg) Add(n Node) {
-	a.sum += n.C
+// NewMeanIQRAgg returns an aggregator which
+// computes mean value of values from IQR interval.
+func NewMeanIQRAgg() Aggregator {
+	return new(meanIQRAgg)
+}
+
+func (a *meanSumAgg) Add(n float64) {
+	a.sum += n
 	a.count++
 }
 
-func (a *meanCapSumAgg) Compute() float64 {
+func (a *meanSumAgg) Compute() float64 {
 	if a.count == 0 {
 		return 0
 	}
 	return float64(a.sum) / float64(a.count)
 }
 
-func (a *meanCapAgg) Add(n Node) {
+func (a *meanSumAgg) Clear() {
+	a.sum = 0
+	a.count = 0
+}
+
+func (a *meanAgg) Add(n float64) {
 	c := a.count + 1
-	a.mean = a.mean*(float64(a.count)/float64(c)) + float64(n.C)/float64(c)
+	a.mean = a.mean*(float64(a.count)/float64(c)) + float64(n)/float64(c)
 	a.count++
 }
 
-func (a *meanCapAgg) Compute() float64 {
+func (a *meanAgg) Compute() float64 {
 	return a.mean
 }
 
-func (a *minPriceAgg) Add(n Node) {
-	if a.min == 0 || n.P < a.min {
-		a.min = n.P
+func (a *meanAgg) Clear() {
+	a.count = 0
+	a.mean = 0
+}
+
+func (a *minAgg) Add(n float64) {
+	if a.min == 0 || n < a.min {
+		a.min = n
 	}
 }
 
-func (a *minPriceAgg) Compute() float64 {
+func (a *minAgg) Compute() float64 {
 	return float64(a.min)
 }
 
-func (a *meanPriceIQRAgg) Add(n Node) {
-	a.arr = append(a.arr, n.P)
+func (a *minAgg) Clear() {
+	a.min = 0
 }
 
-func (a *meanPriceIQRAgg) Compute() float64 {
+func (a *meanIQRAgg) Add(n float64) {
+	a.arr = append(a.arr, n)
+}
+
+func (a *meanIQRAgg) Compute() float64 {
 	l := len(a.arr)
 	if l == 0 {
 		return 0
@@ -138,23 +149,26 @@ func (a *meanPriceIQRAgg) Compute() float64 {
 
 	var min, max float64
 	if l < 4 {
-		min, max = float64(a.arr[0]), float64(a.arr[l-1])
+		min, max = a.arr[0], a.arr[l-1]
 	} else {
 		start, end := l/4, l*3/4-1
-		iqr := a.k * float64(a.arr[end]-a.arr[start])
-		min, max = float64(a.arr[start])-iqr, float64(a.arr[end])+iqr
+		iqr := a.k * (a.arr[end] - a.arr[start])
+		min, max = a.arr[start]-iqr, a.arr[end]+iqr
 	}
 
 	count := 0
 	sum := float64(0)
 	for _, e := range a.arr {
-		t := float64(e)
-		if t >= min && t <= max {
-			sum += float64(t)
+		if e >= min && e <= max {
+			sum += e
 			count++
 		}
 	}
 	return sum / float64(count)
+}
+
+func (a *meanIQRAgg) Clear() {
+	a.arr = a.arr[:0]
 }
 
 func (r *reverseMinNorm) Normalize(w float64) float64 {

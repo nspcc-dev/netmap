@@ -31,6 +31,7 @@ type (
 	Bucket struct {
 		Key      string
 		Value    string
+		weight   float64
 		nodes    Nodes
 		children []Bucket
 	}
@@ -182,11 +183,11 @@ func (b *Bucket) findNodes(pivot []byte, s SFGroup) Nodes {
 }
 
 // Copy returns deep copy of Bucket.
-func (b Bucket) Copy() Bucket {
-	var bc = Bucket{
-		Key:   b.Key,
-		Value: b.Value,
-	}
+func (b Bucket) Copy() (bc Bucket) {
+	bc.weight = b.weight
+	bc.Key = b.Key
+	bc.Value = b.Value
+
 	if b.nodes != nil {
 		bc.nodes = make(Nodes, len(b.nodes))
 		copy(bc.nodes, b.nodes)
@@ -382,7 +383,15 @@ func (b Bucket) GetSelection(ss []Select, pivot []byte) *Bucket {
 
 	cs = getChildrenByKey(b, ss[0])
 	if len(pivot) != 0 {
-		hrw.SortSliceByValue(cs, pivotHash)
+		if b.weight == 0 {
+			hrw.SortSliceByValue(cs, pivotHash)
+		} else {
+			weights := make([]float64, len(cs))
+			for i := range weights {
+				weights[i] = cs[i].weight
+			}
+			hrw.SortSliceByWeightValue(cs, weights, pivotHash)
+		}
 	}
 	for i := 0; i < len(cs); i++ {
 		if r = cs[i].GetSelection(ss[1:], pivot); r != nil {
@@ -587,9 +596,9 @@ func (b Bucket) Name() string {
 
 func (b *Bucket) fillNodes() {
 	r := b.nodes
-	for _, c := range b.children {
-		c.fillNodes()
-		r = merge(r, c.Nodelist())
+	for i := range b.children {
+		b.children[i].fillNodes()
+		r = merge(r, b.children[i].Nodelist())
 	}
 	b.nodes = r
 }
