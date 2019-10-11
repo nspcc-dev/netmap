@@ -26,10 +26,10 @@ func TestNewWeightFunc(t *testing.T) {
 	initTestBucket(t, &b)
 
 	meanCap := b.Traverse(new(meanAgg), CapWeightFunc).Compute()
-	capNorm := &sigmoidNorm{scale: meanCap}
+	capNorm := NewSigmoidNorm(meanCap)
 
 	minPrice := b.Traverse(new(minAgg), PriceWeightFunc).Compute()
-	priceNorm := &reverseMinNorm{min: minPrice}
+	priceNorm := NewReverseMinNorm(minPrice)
 
 	wf := NewWeightFunc(capNorm, priceNorm)
 
@@ -55,19 +55,23 @@ func TestAggregator_Compute(t *testing.T) {
 
 	initTestBucket(t, &b)
 
-	a = new(meanAgg)
+	a = NewMeanAgg()
 	b.Traverse(a, CapWeightFunc)
 	require.InEpsilon(t, 3.0, a.Compute(), eps)
 
-	a = new(meanSumAgg)
+	a = NewMeanSumAgg()
 	b.Traverse(a, CapWeightFunc)
 	require.InEpsilon(t, 3.0, a.Compute(), eps)
 
-	a = new(minAgg)
+	a = NewMinAgg()
 	b.Traverse(a, PriceWeightFunc)
 	require.InEpsilon(t, 1.0, a.Compute(), eps)
 
-	a = new(meanIQRAgg)
+	a = NewMaxAgg()
+	b.Traverse(a, PriceWeightFunc)
+	require.InEpsilon(t, 3.0, a.Compute(), eps)
+
+	a = NewMeanIQRAgg()
 	b.Traverse(a, PriceWeightFunc)
 	require.InEpsilon(t, 2.0, a.Compute(), eps)
 
@@ -97,21 +101,21 @@ func TestAggregator_Compute(t *testing.T) {
 
 func TestSigmoidNorm_Normalize(t *testing.T) {
 	t.Run("sigmoid norm must equal to 1/2 at `scale`", func(t *testing.T) {
-		norm := &sigmoidNorm{scale: 1}
+		norm := NewSigmoidNorm(1)
 		require.InEpsilon(t, 0.5, norm.Normalize(1), eps)
 
-		norm = &sigmoidNorm{scale: 10}
+		norm = NewSigmoidNorm(10)
 		require.InEpsilon(t, 0.5, norm.Normalize(10), eps)
 	})
 
 	t.Run("sigmoid norm must be less than 1", func(t *testing.T) {
-		norm := &sigmoidNorm{scale: 2}
+		norm := NewSigmoidNorm(2)
 		require.True(t, norm.Normalize(100) < 1)
 		require.True(t, norm.Normalize(math.MaxFloat64) <= 1)
 	})
 
 	t.Run("sigmoid norm must be monotonic", func(t *testing.T) {
-		norm := &sigmoidNorm{scale: 5}
+		norm := NewSigmoidNorm(5)
 		for i := 0; i < 5; i++ {
 			a, b := rand.Float64(), rand.Float64()
 			if b < a {
@@ -124,15 +128,30 @@ func TestSigmoidNorm_Normalize(t *testing.T) {
 
 func TestReverseMinNorm_Normalize(t *testing.T) {
 	t.Run("reverseMin norm should not panic", func(t *testing.T) {
-		norm := &reverseMinNorm{min: 0}
+		norm := NewReverseMinNorm(0)
 		require.NotPanics(t, func() { norm.Normalize(0) })
 
-		norm = &reverseMinNorm{min: 1}
+		norm = NewReverseMinNorm(1)
 		require.NotPanics(t, func() { norm.Normalize(0) })
 	})
 
 	t.Run("reverseMin norm should equal 1 at min value", func(t *testing.T) {
-		norm := &reverseMinNorm{min: 10}
+		norm := NewReverseMinNorm(10)
+		require.InEpsilon(t, 1.0, norm.Normalize(10), eps)
+	})
+}
+
+func TestMaxNorm_Normalize(t *testing.T) {
+	t.Run("max norm should not panic", func(t *testing.T) {
+		norm := NewMaxNorm(0)
+		require.NotPanics(t, func() { norm.Normalize(1) })
+
+		norm = NewMaxNorm(1)
+		require.NotPanics(t, func() { norm.Normalize(0) })
+	})
+
+	t.Run("max norm should equal 1 at max value", func(t *testing.T) {
+		norm := NewMaxNorm(10)
 		require.InEpsilon(t, 1.0, norm.Normalize(10), eps)
 	})
 }

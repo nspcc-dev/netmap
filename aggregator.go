@@ -32,6 +32,10 @@ type (
 		min float64
 	}
 
+	maxAgg struct {
+		max float64
+	}
+
 	meanIQRAgg struct {
 		k   float64
 		arr []float64
@@ -39,6 +43,10 @@ type (
 
 	reverseMinNorm struct {
 		min float64
+	}
+
+	maxNorm struct {
+		max float64
 	}
 
 	sigmoidNorm struct {
@@ -57,9 +65,11 @@ var (
 	_ Aggregator = (*meanSumAgg)(nil)
 	_ Aggregator = (*meanAgg)(nil)
 	_ Aggregator = (*minAgg)(nil)
+	_ Aggregator = (*maxAgg)(nil)
 	_ Aggregator = (*meanIQRAgg)(nil)
 
 	_ Normalizer = (*reverseMinNorm)(nil)
+	_ Normalizer = (*maxNorm)(nil)
 	_ Normalizer = (*sigmoidNorm)(nil)
 	_ Normalizer = (*constNorm)(nil)
 )
@@ -83,10 +93,40 @@ func NewMinAgg() Aggregator {
 	return new(minAgg)
 }
 
+// NewMaxAgg returns an aggregator which
+// computes max value.
+func NewMaxAgg() Aggregator {
+	return new(maxAgg)
+}
+
 // NewMeanIQRAgg returns an aggregator which
 // computes mean value of values from IQR interval.
 func NewMeanIQRAgg() Aggregator {
 	return new(meanIQRAgg)
+}
+
+// NewReverseMinNorm returns a normalizer which
+// normalize values in range of 0.0 to 1.0 to a minimum value.
+func NewReverseMinNorm(min float64) Normalizer {
+	return &reverseMinNorm{min: min}
+}
+
+// NewMaxNorm returns a normalizer which
+// normalize values in range of 0.0 to 1.0 to a maximum value.
+func NewMaxNorm(max float64) Normalizer {
+	return &maxNorm{max: max}
+}
+
+// NewSigmoidNorm returns a normalizer which
+// normalize values in range of 0.0 to 1.0 to a scaled sigmoid.
+func NewSigmoidNorm(scale float64) Normalizer {
+	return &sigmoidNorm{scale: scale}
+}
+
+// NewConstNorm returns a normalizer which
+// returns a constant values
+func NewConstNorm(value float64) Normalizer {
+	return &constNorm{value: value}
 }
 
 func (a *meanSumAgg) Add(n float64) {
@@ -98,7 +138,7 @@ func (a *meanSumAgg) Compute() float64 {
 	if a.count == 0 {
 		return 0
 	}
-	return float64(a.sum) / float64(a.count)
+	return a.sum / float64(a.count)
 }
 
 func (a *meanSumAgg) Clear() {
@@ -108,7 +148,7 @@ func (a *meanSumAgg) Clear() {
 
 func (a *meanAgg) Add(n float64) {
 	c := a.count + 1
-	a.mean = a.mean*(float64(a.count)/float64(c)) + float64(n)/float64(c)
+	a.mean = a.mean*(float64(a.count)/float64(c)) + n/float64(c)
 	a.count++
 }
 
@@ -128,11 +168,25 @@ func (a *minAgg) Add(n float64) {
 }
 
 func (a *minAgg) Compute() float64 {
-	return float64(a.min)
+	return a.min
 }
 
 func (a *minAgg) Clear() {
 	a.min = 0
+}
+
+func (a *maxAgg) Add(n float64) {
+	if n > a.max {
+		a.max = n
+	}
+}
+
+func (a *maxAgg) Compute() float64 {
+	return a.max
+}
+
+func (a *maxAgg) Clear() {
+	a.max = 0
 }
 
 func (a *meanIQRAgg) Add(n float64) {
@@ -176,6 +230,13 @@ func (r *reverseMinNorm) Normalize(w float64) float64 {
 		return 0
 	}
 	return r.min / w
+}
+
+func (r *maxNorm) Normalize(w float64) float64 {
+	if r.max == 0 {
+		return 0
+	}
+	return w / r.max
 }
 
 func (r *sigmoidNorm) Normalize(w float64) float64 {
