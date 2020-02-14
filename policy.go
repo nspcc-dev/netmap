@@ -227,17 +227,34 @@ func (b Bucket) IsValid() bool {
 	return len(nodes) == len(ns)
 }
 
-func (b Bucket) findForbidden(fs []Filter) (forbidden Nodes) {
-	// if root does not satisfy any filter it must be forbidden
-	for _, f := range fs {
-		if b.Key == f.Key && !f.Check(b) {
-			return b.nodes
+func (b Bucket) findAllowed(fs []Filter) (nodes Nodes) {
+	nodes = b.nodes
+
+	for i := range fs {
+		var allowed Nodes
+		for _, c := range b.findKey(fs[i].Key) {
+			if fs[i].F.Check(c.Value) {
+				allowed = append(allowed, c.nodes...)
+			}
 		}
+
+		sort.Sort(allowed)
+		nodes = intersect(nodes, allowed)
 	}
 
-	for _, c := range b.children {
-		forbidden = union(forbidden, c.findForbidden(fs))
+	return
+}
+
+func (b *Bucket) findKey(key string) (bs []*Bucket) {
+	if b.Key == key {
+		bs = append(bs, b)
+		return
 	}
+
+	for i := range b.children {
+		bs = append(bs, b.children[i].findKey(key)...)
+	}
+
 	return
 }
 
@@ -329,15 +346,15 @@ func (b Bucket) getMaxSelectionC(ss []Select, filter FilterFunc, cut bool) (*Buc
 // any other subgraph satisfying specified selects and filters.
 func (b Bucket) GetMaxSelection(s SFGroup) (r *Bucket) {
 	var (
-		forbidden = b.findForbidden(s.Filters)
-		excludes  = make(map[uint32]struct{}, len(forbidden)+len(s.Exclude))
+		allowed  = b.findAllowed(s.Filters)
+		excludes = make(map[uint32]bool, len(s.Exclude))
 	)
 
-	for _, c := range forbidden {
-		excludes[c.N] = struct{}{}
+	for _, c := range allowed {
+		excludes[c.N] = false
 	}
 	for _, c := range s.Exclude {
-		excludes[c] = struct{}{}
+		excludes[c] = true
 	}
 
 	r, _ = b.getMaxSelection(s.Selectors, func(nodes Nodes) Nodes {
