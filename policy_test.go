@@ -88,6 +88,23 @@ func TestBucket_RuntimeError(t *testing.T) {
 		require.NotEqual(t, r2.nodes, r3.nodes)
 	})
 
+	t.Run("non-existing bucket", func(t *testing.T) {
+		buckets := []bucket{
+			{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
+			{"/Location:Europe/Country:Spain/City:Barcelona", []uint32{16, 19}},
+		}
+		root, err := newRoot(buckets...)
+		require.NoError(t, err)
+
+		ss := []Select{
+			{Key: "InvalidSelect", Count: 1},
+			{Key: NodesBucket, Count: 1},
+		}
+
+		r := root.GetSelection(ss, defaultPivot)
+		require.Nil(t, r)
+	})
+
 	t.Run("regression test", func(t *testing.T) {
 		buckets := []bucket{
 			{"/Location:Europe/Country:Spain/City:Madrid", []uint32{17, 18}},
@@ -367,6 +384,24 @@ func TestBucket_GetMaxSelection(t *testing.T) {
 	root, err = newRoot(buckets...)
 	require.NoError(t, err)
 
+	t.Run("invalid filter", func(t *testing.T) {
+		ss = []Select{{Key: "Country", Count: 1}}
+		fs = []Filter{{Key: "InvalidFilter", F: FilterIn("Germany", "Spain")}}
+		r = root.GetMaxSelection(SFGroup{Selectors: ss, Filters: fs})
+		require.Nil(t, r)
+	})
+
+	t.Run("match uniq attribute", func(t *testing.T) {
+		ss = []Select{{Key: NodesBucket, Count: 2}}
+		fs = []Filter{{Key: "City", F: FilterEQ("Madrid")}}
+		r = root.GetMaxSelection(SFGroup{Selectors: ss, Filters: fs})
+		require.NotNil(t, r)
+
+		ss = []Select{{Key: NodesBucket, Count: 3}}
+		r = root.GetMaxSelection(SFGroup{Selectors: ss, Filters: fs})
+		require.Nil(t, r)
+	})
+
 	buckets = []bucket{
 		{"/Location:Europe/Country:Germany/City:Berlin", []uint32{9, 10}},
 		{"/Location:Europe/Country:Germany/City:Hamburg", []uint32{25}},
@@ -466,7 +501,6 @@ func TestBucket_GetMaxSelection(t *testing.T) {
 	fs = []Filter{{Key: "Country", F: FilterEQ("Germany")}}
 	r = root.GetMaxSelection(SFGroup{Selectors: ss, Filters: fs})
 	require.Equal(t, &exp, r)
-
 }
 
 func TestNetMap_GetNodesByOption(t *testing.T) {

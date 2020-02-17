@@ -48,10 +48,10 @@ func intersect(a, b Nodes) Nodes {
 	return c
 }
 
-func diff(a Nodes, b map[uint32]struct{}) (c Nodes) {
+func diff(a Nodes, exclude map[uint32]bool) (c Nodes) {
 	c = make(Nodes, 0, len(a))
 	for _, e := range a {
-		if _, ok := b[e.N]; !ok {
+		if excl, ok := exclude[e.N]; ok && !excl {
 			c = append(c, e)
 		}
 	}
