@@ -9,15 +9,13 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/flynn-archive/go-shlex v0.0.0-20150515145356-3f9db97f8568 // indirect
-	github.com/gogo/protobuf v1.3.0
+	github.com/gogo/protobuf v1.3.2
 	github.com/golang/protobuf v1.3.2
 	github.com/mattn/go-colorable v0.0.9 // indirect
 	github.com/mattn/go-isatty v0.0.4 // indirect
 	github.com/nspcc-dev/hrw v1.0.8
 	github.com/pkg/errors v0.8.0
 	github.com/stretchr/testify v1.3.0
-	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
-	golang.org/x/sys v0.0.0-20181228144115-9a3f9b0469bb // indirect
 	gopkg.in/abiosoft/ishell.v2 v2.0.0
 )
 
