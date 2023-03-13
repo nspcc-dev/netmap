@@ -16,8 +16,7 @@ require (
 	github.com/nspcc-dev/hrw v1.0.8
 	github.com/pkg/errors v0.8.0
 	github.com/stretchr/testify v1.3.0
-	golang.org/x/sync v0.0.0-20181108010431-42b317875d0f // indirect
-	golang.org/x/sys v0.0.0-20181228144115-9a3f9b0469bb // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	gopkg.in/abiosoft/ishell.v2 v2.0.0
 )
 
